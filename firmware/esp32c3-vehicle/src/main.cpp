@@ -168,6 +168,14 @@ void setupWebServer() {
     server.on("/", HTTP_GET, handleRoot);
     server.on("/api/status", HTTP_GET, handleStatus);
 
+    // WiFi HTTP Remote Control Endpoint
+    server.on("/api/drive", HTTP_GET, []() {
+        int v = server.hasArg("v") ? server.arg("v").toInt() : 0;
+        int w = server.hasArg("w") ? server.arg("w").toInt() : 0;
+        driveVehicle(v, w);
+        server.send(200, "application/json", "{\"status\":\"ok\",\"v\":" + String(v) + ",\"w\":" + String(w) + "}");
+    });
+
     // OTA Flashing Handler with Pre-Flashing Rule Checks
     server.on("/update", HTTP_POST, []() {
         server.sendHeader("Connection", "close");

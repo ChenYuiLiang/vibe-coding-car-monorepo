@@ -5,6 +5,7 @@ import { renderDashboard } from './components/layout';
 
 interface UiElements {
   btnConnect: HTMLButtonElement;
+  btnWifiConnect: HTMLButtonElement;
   btnDisconnect: HTMLButtonElement;
   statusDot: HTMLSpanElement;
   statusText: HTMLSpanElement;
@@ -22,6 +23,10 @@ interface UiElements {
   otaProgressPercent: HTMLSpanElement;
   btnStartOta: HTMLButtonElement;
   chkScanAll: HTMLInputElement;
+  tabModeBle: HTMLButtonElement;
+  tabModeWifi: HTMLButtonElement;
+  bleConfigPanel: HTMLDivElement;
+  wifiConfigPanel: HTMLDivElement;
   buttons: Record<'w' | 'a' | 's' | 'd' | 'space', HTMLButtonElement>;
 }
 
@@ -47,6 +52,7 @@ function getElement<TElement extends HTMLElement>(id: string): TElement {
 
 const ui: UiElements = {
   btnConnect: getElement<HTMLButtonElement>('btnConnect'),
+  btnWifiConnect: getElement<HTMLButtonElement>('btnWifiConnect'),
   btnDisconnect: getElement<HTMLButtonElement>('btnDisconnect'),
   statusDot: getElement<HTMLSpanElement>('statusDot'),
   statusText: getElement<HTMLSpanElement>('statusText'),
@@ -55,6 +61,10 @@ const ui: UiElements = {
   uuidChar: getElement<HTMLInputElement>('uuidChar'),
   espIpAddress: getElement<HTMLInputElement>('espIpAddress'),
   chkScanAll: getElement<HTMLInputElement>('chkScanAll'),
+  tabModeBle: getElement<HTMLButtonElement>('tabModeBle'),
+  tabModeWifi: getElement<HTMLButtonElement>('tabModeWifi'),
+  bleConfigPanel: getElement<HTMLDivElement>('bleConfigPanel'),
+  wifiConfigPanel: getElement<HTMLDivElement>('wifiConfigPanel'),
   firmwareFileInput: getElement<HTMLInputElement>('firmwareFileInput'),
   otaMagic: getElement<HTMLSpanElement>('otaMagic'),
   otaChip: getElement<HTMLSpanElement>('otaChip'),
@@ -75,6 +85,8 @@ const ui: UiElements = {
 
 let currentSelectedFirmwareBuffer: Uint8Array | null = null;
 let currentValidationResult: FirmwareValidationResult | null = null;
+let currentMode: 'BLE' | 'WIFI' = 'BLE';
+let wifiConnected = false;
 
 function log(message: string, error = false): void {
   const time = new Date().toLocaleTimeString('en-US', {
@@ -89,16 +101,48 @@ function log(message: string, error = false): void {
 }
 
 function updateConnectionState(connected: boolean): void {
-  ui.statusDot.className = connected
+  const isOnline = currentMode === 'BLE' ? connected : wifiConnected;
+  ui.statusDot.className = isOnline
     ? 'h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.9)]'
     : 'h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.9)]';
-  ui.statusText.textContent = connected ? '已連線就緒 (Online)' : '未連線狀態 (Offline)';
-  ui.btnConnect.classList.toggle('hidden', connected);
-  ui.btnDisconnect.classList.toggle('hidden', !connected);
+  
+  if (currentMode === 'BLE') {
+    ui.statusText.textContent = connected ? '已連線就緒 (BLE Online)' : '未連線狀態 (Offline)';
+    ui.btnConnect.classList.toggle('hidden', connected);
+    ui.btnWifiConnect.classList.add('hidden');
+    ui.btnDisconnect.classList.toggle('hidden', !connected);
+  } else {
+    ui.statusText.textContent = wifiConnected ? `📶 WiFi 已連線 (${ui.espIpAddress.value})` : '未連線狀態 (WiFi Offline)';
+    ui.btnConnect.classList.add('hidden');
+    ui.btnWifiConnect.classList.toggle('hidden', wifiConnected);
+    ui.btnDisconnect.classList.toggle('hidden', !wifiConnected);
+  }
+
   Object.values(ui.buttons).forEach((button) => {
-    button.disabled = !connected;
+    button.disabled = !isOnline;
   });
 }
+
+// Mode Switcher Event Handlers
+ui.tabModeBle.addEventListener('click', () => {
+  currentMode = 'BLE';
+  ui.tabModeBle.className = 'rounded-lg bg-sky-500 py-2 text-white shadow transition font-bold';
+  ui.tabModeWifi.className = 'rounded-lg py-2 text-slate-400 hover:text-white transition';
+  ui.bleConfigPanel.classList.remove('hidden');
+  ui.wifiConfigPanel.classList.add('hidden');
+  updateConnectionState(api.getStatus().connected);
+  log('已切換至【藍牙 Web BLE】控制模式。');
+});
+
+ui.tabModeWifi.addEventListener('click', () => {
+  currentMode = 'WIFI';
+  ui.tabModeWifi.className = 'rounded-lg bg-emerald-500 py-2 text-white shadow transition font-bold';
+  ui.tabModeBle.className = 'rounded-lg py-2 text-slate-400 hover:text-white transition';
+  ui.wifiConfigPanel.classList.remove('hidden');
+  ui.bleConfigPanel.classList.add('hidden');
+  updateConnectionState(false);
+  log('已切換至【📶 WiFi HTTP 雙模】控制模式。手機請連至 ESP32-Car-AP WiFi 基地台！');
+});
 
 const api = createVehicleGraphQLApi({
   bluetooth: (navigator as NavigatorWithBluetooth).bluetooth,
@@ -122,15 +166,57 @@ async function connectVehicle(): Promise<void> {
   }
 }
 
-async function sendCommand(command: VehicleCommand, label: string): Promise<void> {
+async function connectWifiVehicle(): Promise<void> {
+  const ip = ui.espIpAddress.value.trim();
+  const url = `http://${ip}/api/status`;
+  log(`[WiFi HTTP] 握手連線至 ${url}...`);
+
   try {
-    await api.execute({
-      query: graphQLOperations.sendVehicleCommand,
-      variables: { command, label }
-    });
-    log(`[Drive Packet] 送出 '${command}' (${label})`);
-  } catch (error) {
-    log(error instanceof Error ? error.message : String(error), true);
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      wifiConnected = true;
+      updateConnectionState(false);
+      log(`[WiFi Connected] 成功握手 ESP32 WiFi 節點！ Watchdog 超時: ${data.watchdogTimeout}ms`);
+    } else {
+      throw new Error(`HTTP 狀態碼: ${res.status}`);
+    }
+  } catch (err) {
+    wifiConnected = false;
+    updateConnectionState(false);
+    log(`[WiFi HTTP Error] 無法連線至 ${url}。請確認手機/電腦已連接 ESP32 WiFi 基地台 (ESP32-Car-AP)。`, true);
+  }
+}
+
+async function sendCommand(command: VehicleCommand, label: string): Promise<void> {
+  if (currentMode === 'BLE') {
+    try {
+      await api.execute({
+        query: graphQLOperations.sendVehicleCommand,
+        variables: { command, label }
+      });
+      log(`[BLE Drive Packet] 送出 '${command}' (${label})`);
+    } catch (error) {
+      log(error instanceof Error ? error.message : String(error), true);
+    }
+  } else {
+    // WiFi HTTP Control Mode
+    let v = 0;
+    let w = 0;
+    if (command === 'F') { v = 100; w = 0; }
+    if (command === 'B') { v = -100; w = 0; }
+    if (command === 'L') { v = 0; w = -100; }
+    if (command === 'R') { v = 0; w = 100; }
+    if (command === 'S') { v = 0; w = 0; }
+
+    const ip = ui.espIpAddress.value.trim();
+    const driveUrl = `http://${ip}/api/drive?v=${v}&w=${w}`;
+    try {
+      fetch(driveUrl).catch(() => undefined);
+      log(`[WiFi HTTP Drive] Send '${command}' (${label}): v=${v}, w=${w}`);
+    } catch (err) {
+      log(`[WiFi HTTP Drive Error] ${err}`, true);
+    }
   }
 }
 
@@ -230,10 +316,17 @@ ui.btnStartOta.addEventListener('click', async () => {
 });
 
 ui.btnConnect.addEventListener('click', connectVehicle);
+ui.btnWifiConnect.addEventListener('click', connectWifiVehicle);
 ui.btnDisconnect.addEventListener('click', () => {
-  api.execute({ query: graphQLOperations.disconnectVehicle }).catch((error) => {
-    log(error instanceof Error ? error.message : String(error), true);
-  });
+  if (currentMode === 'BLE') {
+    api.execute({ query: graphQLOperations.disconnectVehicle }).catch((error) => {
+      log(error instanceof Error ? error.message : String(error), true);
+    });
+  } else {
+    wifiConnected = false;
+    updateConnectionState(false);
+    log('已斷開 WiFi HTTP 連線。');
+  }
 });
 
 // Touch and Button Event Listeners
@@ -250,7 +343,8 @@ ui.buttons.d.addEventListener('touchstart', (e) => { e.preventDefault(); sendCom
 ui.buttons.space.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('S', '煞車'); });
 
 document.addEventListener('keydown', (event) => {
-  if (!api.getStatus().connected || event.repeat) {
+  const isOnline = currentMode === 'BLE' ? api.getStatus().connected : wifiConnected;
+  if (!isOnline || event.repeat) {
     return;
   }
 

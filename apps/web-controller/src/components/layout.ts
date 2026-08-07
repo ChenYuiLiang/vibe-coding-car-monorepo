@@ -54,14 +54,24 @@ export function renderDashboard(): string {
           <section class="flex flex-col justify-between space-y-4 rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur md:col-span-4">
             <div>
               <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
-                <h2 class="text-base font-bold text-slate-100">藍牙 / 網路連線設定</h2>
+                <h2 class="text-base font-bold text-slate-100">連線模式與通訊設定</h2>
                 <div class="flex items-center gap-2">
                   <span id="statusDot" class="h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]"></span>
                   <span id="statusText" class="text-xs font-medium text-slate-300">未連線 (Offline)</span>
                 </div>
               </div>
 
-              <div class="space-y-3">
+              <!-- Connection Mode Switcher -->
+              <div class="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-950 p-1 font-semibold text-xs">
+                <button id="tabModeBle" class="rounded-lg bg-sky-500 py-2 text-white shadow transition">
+                  藍牙 (Web BLE)
+                </button>
+                <button id="tabModeWifi" class="rounded-lg py-2 text-slate-400 hover:text-white transition">
+                  📶 WiFi (HTTP 雙模)
+                </button>
+              </div>
+
+              <div id="bleConfigPanel" class="space-y-3">
                 <label class="block">
                   <span class="mb-1 block text-xs text-slate-400">BLE 服務 UUID (Primary Service)</span>
                   <input id="uuidService" value="4fafc201-1fb5-459e-8fcc-c5c9c331914b" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200 outline-none focus:border-sky-400" />
@@ -72,21 +82,29 @@ export function renderDashboard(): string {
                   <input id="uuidChar" value="beb5483e-36e1-4688-b7f5-ea07361b26a8" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200 outline-none focus:border-sky-400" />
                 </label>
 
-                <label class="block">
-                  <span class="mb-1 block text-xs text-slate-400">ESP32 WiFi IP / OTA 主機</span>
-                  <input id="espIpAddress" value="192.168.4.1" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200 outline-none focus:border-sky-400" />
-                </label>
-
                 <label class="flex items-center gap-2 pt-1 cursor-pointer">
                   <input id="chkScanAll" type="checkbox" checked class="h-4 w-4 rounded border-white/20 bg-slate-950 text-sky-500 focus:ring-sky-400" />
-                  <span class="text-xs font-medium text-slate-300">廣域搜尋所有周圍藍牙裝置 (強烈建議勾選)</span>
+                  <span class="text-xs font-medium text-slate-300">廣域搜尋所有周圍藍牙裝置</span>
                 </label>
+              </div>
+
+              <div id="wifiConfigPanel" class="hidden space-y-3">
+                <label class="block">
+                  <span class="mb-1 block text-xs text-slate-400">ESP32 WiFi IP / AP 網址</span>
+                  <input id="espIpAddress" value="192.168.4.1" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-emerald-300 outline-none focus:border-emerald-400" />
+                </label>
+                <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[11px] text-emerald-200 leading-relaxed">
+                  💡 <strong>WiFi 雙模提示</strong>：手機/電腦只需連接 ESP32 WiFi 基地台 (<code>ESP32-Car-AP</code>，密碼：<code>vibe123456</code>)，即可免藍牙配對直連操控！
+                </div>
               </div>
             </div>
 
             <div class="mt-4 space-y-2">
               <button id="btnConnect" class="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-sky-400 active:scale-98">
-                連線至 ESP32 遙控車
+                藍牙連線至 ESP32 遙控車
+              </button>
+              <button id="btnWifiConnect" class="hidden w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-emerald-400 active:scale-98">
+                📶 WiFi 握手連線
               </button>
               <button id="btnDisconnect" class="hidden w-full rounded-xl border border-rose-500/50 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500 hover:text-white">
                 斷開連線
