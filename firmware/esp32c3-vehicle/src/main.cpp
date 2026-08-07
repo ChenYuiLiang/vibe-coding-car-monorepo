@@ -266,11 +266,12 @@ void setup() {
 
     setupWebServer();
 
-    // BLE Service Setup
+    // BLE Service Setup (Supports both Monorepo Protocol & Official vibe-coding.tw Nordic UART Service)
     BLEDevice::init("ESP32-Car-C3");
     BLEServer *pServer = BLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
 
+    // 1. Monorepo Vehicle Primary Service
     BLEService *pService = pServer->createService(SERVICE_UUID);
     BLECharacteristic *pCharacteristic = pService->createCharacteristic(
                                             CHARACTERISTIC_UUID,
@@ -281,11 +282,22 @@ void setup() {
     pCharacteristic->setCallbacks(new CommandCallbacks());
     pService->start();
 
+    // 2. Official vibe-coding.tw Nordic UART Secondary Service (6e400001-b5a3-f393-e0a9-e50e24dcca9e)
+    BLEService *pNordicService = pServer->createService("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+    BLECharacteristic *pNordicRxChar = pNordicService->createCharacteristic(
+                                            "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
+                                            BLECharacteristic::PROPERTY_WRITE |
+                                            BLECharacteristic::PROPERTY_WRITE_NR
+                                          );
+    pNordicRxChar->setCallbacks(new CommandCallbacks());
+    pNordicService->start();
+
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->addServiceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
     pAdvertising->setScanResponse(true);
     BLEDevice::startAdvertising();
-    Serial.println("[BLE] Advertising Started as 'ESP32-Car-C3'");
+    Serial.println("[BLE] Dual-Service Advertising Started as 'ESP32-Car-C3'");
 }
 
 void loop() {
