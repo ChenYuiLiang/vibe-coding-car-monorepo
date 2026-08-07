@@ -18,6 +18,7 @@ export interface GraphQLResponse<TData> {
 export interface ConnectVehicleVariables {
   serviceUuid: string;
   characteristicUuid: string;
+  scanAllDevices?: boolean;
 }
 
 export interface SendVehicleCommandVariables {
@@ -99,7 +100,7 @@ export const graphQLSchema = `
   }
 
   type Mutation {
-    connectVehicle(serviceUuid: ID!, characteristicUuid: ID!): VehicleStatus!
+    connectVehicle(serviceUuid: ID!, characteristicUuid: ID!, scanAllDevices: Boolean): VehicleStatus!
     disconnectVehicle: VehicleStatus!
     sendVehicleCommand(command: VehicleCommand!, label: String!): CommandResult!
   }
@@ -115,8 +116,8 @@ export const graphQLOperations = {
     }
   `,
   connectVehicle: `
-    mutation ConnectVehicle($serviceUuid: ID!, $characteristicUuid: ID!) {
-      connectVehicle(serviceUuid: $serviceUuid, characteristicUuid: $characteristicUuid) {
+    mutation ConnectVehicle($serviceUuid: ID!, $characteristicUuid: ID!, $scanAllDevices: Boolean) {
+      connectVehicle(serviceUuid: $serviceUuid, characteristicUuid: $characteristicUuid, scanAllDevices: $scanAllDevices) {
         connected
         deviceName
       }
@@ -177,18 +178,13 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     const characteristicUuid = normalizeUuid(variables.characteristicUuid);
 
     log('GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)');
-    let device: BluetoothDevice;
-    try {
-      device = await dependencies.bluetooth.requestDevice({
-        filters: [{ services: [serviceUuid] }]
-      });
-    } catch {
-      // Fallback: If UUID filter is not broadcasting, allow scanning all nearby BLE devices
-      device = await dependencies.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [serviceUuid]
-      });
-    }
+    
+    // Web Bluetooth API requires requestDevice to be called directly within a single user gesture.
+    const requestOptions = variables.scanAllDevices
+      ? { acceptAllDevices: true, optionalServices: [serviceUuid] }
+      : { filters: [{ services: [serviceUuid] }], optionalServices: [serviceUuid] };
+
+    const device = await dependencies.bluetooth.requestDevice(requestOptions);
 
     if (!device.gatt) {
       throw new Error('選取的藍牙裝置沒有可用的 GATT server。');

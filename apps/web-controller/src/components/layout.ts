@@ -76,6 +76,11 @@ export function renderDashboard(): string {
                   <span class="mb-1 block text-xs text-slate-400">ESP32 WiFi IP / OTA 主機</span>
                   <input id="espIpAddress" value="192.168.4.1" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-sky-200 outline-none focus:border-sky-400" />
                 </label>
+
+                <label class="flex items-center gap-2 pt-1 cursor-pointer">
+                  <input id="chkScanAll" type="checkbox" checked class="h-4 w-4 rounded border-white/20 bg-slate-950 text-sky-500 focus:ring-sky-400" />
+                  <span class="text-xs font-medium text-slate-300">廣域搜尋所有周圍藍牙裝置 (強烈建議勾選)</span>
+                </label>
               </div>
             </div>
 

@@ -21,6 +21,7 @@ interface UiElements {
   otaProgressBar: HTMLDivElement;
   otaProgressPercent: HTMLSpanElement;
   btnStartOta: HTMLButtonElement;
+  chkScanAll: HTMLInputElement;
   buttons: Record<'w' | 'a' | 's' | 'd' | 'space', HTMLButtonElement>;
 }
 
@@ -53,6 +54,7 @@ const ui: UiElements = {
   uuidService: getElement<HTMLInputElement>('uuidService'),
   uuidChar: getElement<HTMLInputElement>('uuidChar'),
   espIpAddress: getElement<HTMLInputElement>('espIpAddress'),
+  chkScanAll: getElement<HTMLInputElement>('chkScanAll'),
   firmwareFileInput: getElement<HTMLInputElement>('firmwareFileInput'),
   otaMagic: getElement<HTMLSpanElement>('otaMagic'),
   otaChip: getElement<HTMLSpanElement>('otaChip'),
@@ -110,7 +112,8 @@ async function connectVehicle(): Promise<void> {
       query: graphQLOperations.connectVehicle,
       variables: {
         serviceUuid: ui.uuidService.value,
-        characteristicUuid: ui.uuidChar.value
+        characteristicUuid: ui.uuidChar.value,
+        scanAllDevices: ui.chkScanAll.checked
       }
     });
     log('連線成功！已成功握手 ESP32 藍牙通道， Watchdog 安全超時監控運作中。');

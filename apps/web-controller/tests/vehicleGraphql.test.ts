@@ -93,7 +93,8 @@ describe('vehicle GraphQL API', () => {
     });
 
     expect(mock.bluetooth.requestDevice).toHaveBeenCalledWith({
-      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }]
+      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
+      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
     });
     expect(response.data.connectVehicle).toEqual({
       connected: true,
