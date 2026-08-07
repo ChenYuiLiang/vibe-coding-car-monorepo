@@ -1,38 +1,64 @@
 import fs from 'fs';
+import http from 'http';
 
-async function uploadOta() {
+function uploadOta() {
   const binPath = './firmware_esp32c3_vibe_car.bin';
   if (!fs.existsSync(binPath)) {
     console.error('❌ 找不到韌體檔案 firmware_esp32c3_vibe_car.bin');
     process.exit(1);
   }
+
   const fileBuffer = fs.readFileSync(binPath);
   console.log(`\n🚀 [OTA Node Uploader] 準備上傳韌體二進位檔 (${(fileBuffer.length / 1024 / 1024).toFixed(2)} MB) 至 http://192.168.4.1/update ...`);
 
-  const blob = new Blob([fileBuffer], { type: 'application/octet-stream' });
-  const formData = new FormData();
-  formData.append('update', blob, 'firmware.bin');
+  const boundary = '--------------------------' + Math.random().toString(36).substring(2, 16);
+  
+  const headerText = 
+    `--${boundary}\r\n` +
+    `Content-Disposition: form-data; name="update"; filename="firmware.bin"\r\n` +
+    `Content-Type: application/octet-stream\r\n\r\n`;
 
-  try {
-    const res = await fetch('http://192.168.4.1/update', {
-      method: 'POST',
-      body: formData,
-      signal: AbortSignal.timeout(15000)
-    });
-    const text = await res.text();
-    if (res.ok) {
-      console.log('\n===================================================');
-      console.log('🎉 [OTA SUCCESS] 線上升級成功！ESP32-C3 正在重啟中...');
-      console.log(`ESP32 回傳訊息: ${text}`);
-      console.log('===================================================\n');
-    } else {
-      console.error(`\n❌ [OTA ERROR] HTTP ${res.status}: ${text}`);
+  const footerText = `\r\n--${boundary}--\r\n`;
+
+  const headerBuf = Buffer.from(headerText, 'utf-8');
+  const footerBuf = Buffer.from(footerText, 'utf-8');
+
+  const totalLength = headerBuf.length + fileBuffer.length + footerBuf.length;
+
+  const req = http.request({
+    hostname: '192.168.4.1',
+    port: 80,
+    path: '/update',
+    method: 'POST',
+    headers: {
+      'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      'Content-Length': totalLength
     }
-  } catch (err) {
+  }, (res) => {
+    let data = '';
+    res.on('data', chunk => { data += chunk; });
+    res.on('end', () => {
+      if (res.statusCode === 200) {
+        console.log('\n===================================================');
+        console.log('🎉 [OTA SUCCESS] 線上升級成功！ESP32-C3 正在重啟中...');
+        console.log(`ESP32 回傳訊息: ${data}`);
+        console.log('===================================================\n');
+      } else {
+        console.error(`\n❌ [OTA ERROR] HTTP ${res.statusCode}: ${data}`);
+      }
+    });
+  });
+
+  req.on('error', (err) => {
     console.error(`\n❌ [OTA Network Error] 無法存取 http://192.168.4.1/update`);
     console.error(`👉 請確認電腦/手機已連上 ESP32-Car-AP WiFi 基地台 (密碼: vibe123456)。`);
     console.error(`錯誤細節: ${err.message}\n`);
-  }
+  });
+
+  req.write(headerBuf);
+  req.write(fileBuffer);
+  req.write(footerBuf);
+  req.end();
 }
 
 uploadOta();
