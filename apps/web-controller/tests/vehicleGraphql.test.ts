@@ -151,6 +151,27 @@ describe('vehicle GraphQL API', () => {
     ).rejects.toThrow('在裝置上記錄不到相容的藍牙服務');
   });
 
+  it('dynamically discovers primary services when explicit service UUID fails', async () => {
+    const mock = createMockBluetooth();
+    mock.server.getPrimaryService = jest.fn().mockRejectedValue(new Error('Service not found'));
+    const discoveredService: BluetoothService = {
+      uuid: 'custom-vehicle-service-uuid',
+      getCharacteristic: jest.fn().mockResolvedValue(mock.characteristic)
+    };
+    mock.server.getPrimaryServices = jest.fn().mockResolvedValue([discoveredService]);
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    const response = await api.execute<{ connectVehicle: VehicleStatus }>({
+      query: graphQLOperations.connectVehicle,
+      variables: {
+        serviceUuid: 'unknown-uuid',
+        characteristicUuid: 'unknown-char'
+      }
+    });
+
+    expect(response.data.connectVehicle.connected).toBe(true);
+  });
+
   it('throws error when no matching characteristic is found', async () => {
     const mock = createMockBluetooth();
     const service: BluetoothService = {

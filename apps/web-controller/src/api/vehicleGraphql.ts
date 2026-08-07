@@ -36,7 +36,9 @@ export interface BluetoothCharacteristic {
 }
 
 export interface BluetoothService {
+  uuid?: string;
   getCharacteristic(uuid: string): Promise<BluetoothCharacteristic>;
+  getCharacteristics?(): Promise<BluetoothCharacteristic[]>;
 }
 
 export interface BluetoothServer {
@@ -44,6 +46,7 @@ export interface BluetoothServer {
   connect(): Promise<BluetoothServer>;
   disconnect(): void;
   getPrimaryService(uuid: string): Promise<BluetoothService>;
+  getPrimaryServices?(): Promise<BluetoothService[]>;
 }
 
 export interface BluetoothDevice {
@@ -224,8 +227,27 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
       }
     }
 
+    if (!service && server.getPrimaryServices) {
+      try {
+        const allServices = await server.getPrimaryServices();
+        if (allServices && allServices.length > 0) {
+          const serviceUuids = allServices.map(s => s.uuid).filter(Boolean);
+          log(`[BLE Auto Discovery] 裝置暴露的所有 GATT 服務 UUID 為: ${serviceUuids.join(', ')}`);
+          // Pick the first non-generic service (skip 00001800 / 00001801 Generic Access/Attribute)
+          const customService = allServices.find(s => s.uuid && !s.uuid.startsWith('00001800') && !s.uuid.startsWith('00001801'));
+          if (customService) {
+            service = customService;
+            usedServiceUuid = customService.uuid || serviceUuid;
+            log(`自動為您選取相容的自訂藍牙服務: ${usedServiceUuid}`);
+          }
+        }
+      } catch {
+        // dynamic discovery optional
+      }
+    }
+
     if (!service) {
-      throw new Error(`在裝置上記錄不到相容的藍牙服務，請確認 ESP32 韌體或刷入專案預設韌體。`);
+      throw new Error(`在裝置上記錄不到相容的藍牙服務。請確認您選擇的裝置為 ESP32 車子，或執行 'cd firmware/esp32c3-vehicle && pio run -t upload' 燒錄專案韌體。`);
     }
 
     // Attempt characteristic discovery
