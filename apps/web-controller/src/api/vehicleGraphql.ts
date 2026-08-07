@@ -52,7 +52,11 @@ export interface BluetoothDevice {
 }
 
 export interface BluetoothNavigator {
-  requestDevice(options: { filters: Array<{ services: string[] }> }): Promise<BluetoothDevice>;
+  requestDevice(options: {
+    filters?: Array<{ services?: string[]; namePrefix?: string }>;
+    acceptAllDevices?: boolean;
+    optionalServices?: string[];
+  }): Promise<BluetoothDevice>;
 }
 
 export interface VehicleApiDependencies {
@@ -173,9 +177,18 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     const characteristicUuid = normalizeUuid(variables.characteristicUuid);
 
     log('GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)');
-    const device = await dependencies.bluetooth.requestDevice({
-      filters: [{ services: [serviceUuid] }]
-    });
+    let device: BluetoothDevice;
+    try {
+      device = await dependencies.bluetooth.requestDevice({
+        filters: [{ services: [serviceUuid] }]
+      });
+    } catch {
+      // Fallback: If UUID filter is not broadcasting, allow scanning all nearby BLE devices
+      device = await dependencies.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [serviceUuid]
+      });
+    }
 
     if (!device.gatt) {
       throw new Error('選取的藍牙裝置沒有可用的 GATT server。');
