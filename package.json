@@ -13,7 +13,8 @@
     "dev": "npx turbo run dev",
     "build": "npx turbo run build",
     "test": "npx turbo run test",
-    "lint": "npx turbo run lint"
+    "lint": "npx turbo run lint",
+    "ota": "node scripts/ota_upload.mjs"
   },
   "devDependencies": {
     "turbo": "^2.4.0",
