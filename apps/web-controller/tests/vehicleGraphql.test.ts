@@ -94,7 +94,11 @@ describe('vehicle GraphQL API', () => {
 
     expect(mock.bluetooth.requestDevice).toHaveBeenCalledWith({
       filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
-      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+      optionalServices: [
+        '0000ffe0-0000-1000-8000-00805f9b34fb',
+        '4fafc201-1fb5-459e-8fcc-c5c9c331914b',
+        '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
+      ]
     });
     expect(response.data.connectVehicle).toEqual({
       connected: true,
@@ -102,6 +106,68 @@ describe('vehicle GraphQL API', () => {
     });
     expect(onConnectionChange).toHaveBeenCalledWith(true);
     expect(onLog).toHaveBeenCalledWith('GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)');
+  });
+
+  it('falls back to standard BLE services when primary service UUID fails', async () => {
+    const mock = createMockBluetooth();
+    const service: BluetoothService = {
+      getCharacteristic: jest.fn().mockImplementation((uuid) => {
+        if (uuid === 'beb5483e-36e1-4688-b7f5-ea07361b26a8') return Promise.resolve(mock.characteristic);
+        return Promise.reject(new Error('Char not found'));
+      })
+    };
+    mock.server.getPrimaryService = jest.fn().mockImplementation((uuid) => {
+      if (uuid === '4fafc201-1fb5-459e-8fcc-c5c9c331914b' || uuid === '0000ffe0-0000-1000-8000-00805f9b34fb') {
+        return Promise.resolve(service);
+      }
+      return Promise.reject(new Error('Service not found'));
+    });
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    const response = await api.execute<{ connectVehicle: VehicleStatus }>({
+      query: graphQLOperations.connectVehicle,
+      variables: {
+        serviceUuid: 'unknown-uuid',
+        characteristicUuid: 'unknown-char'
+      }
+    });
+
+    expect(response.data.connectVehicle.connected).toBe(true);
+  });
+
+  it('throws error when no matching GATT service is found', async () => {
+    const mock = createMockBluetooth();
+    mock.server.getPrimaryService = jest.fn().mockRejectedValue(new Error('Service not found'));
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    await expect(
+      api.execute({
+        query: graphQLOperations.connectVehicle,
+        variables: {
+          serviceUuid: 'invalid-service-uuid',
+          characteristicUuid: 'invalid-char-uuid'
+        }
+      })
+    ).rejects.toThrow('在裝置上記錄不到相容的藍牙服務');
+  });
+
+  it('throws error when no matching characteristic is found', async () => {
+    const mock = createMockBluetooth();
+    const service: BluetoothService = {
+      getCharacteristic: jest.fn().mockRejectedValue(new Error('Char not found'))
+    };
+    mock.server.getPrimaryService = jest.fn().mockResolvedValue(service);
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    await expect(
+      api.execute({
+        query: graphQLOperations.connectVehicle,
+        variables: {
+          serviceUuid: 'valid-service-uuid',
+          characteristicUuid: 'invalid-char-uuid'
+        }
+      })
+    ).rejects.toThrow('找不到可寫入的藍牙特徵');
   });
 
   it('sends a command after connecting', async () => {

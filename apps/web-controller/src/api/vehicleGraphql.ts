@@ -179,10 +179,16 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
 
     log('GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)');
     
-    // Web Bluetooth API requires requestDevice to be called directly within a single user gesture.
+    const knownServices = Array.from(new Set([
+      serviceUuid,
+      '4fafc201-1fb5-459e-8fcc-c5c9c331914b',
+      '0000ffe0-0000-1000-8000-00805f9b34fb',
+      '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
+    ]));
+
     const requestOptions = variables.scanAllDevices
-      ? { acceptAllDevices: true, optionalServices: [serviceUuid] }
-      : { filters: [{ services: [serviceUuid] }], optionalServices: [serviceUuid] };
+      ? { acceptAllDevices: true, optionalServices: knownServices }
+      : { filters: [{ services: [serviceUuid] }], optionalServices: knownServices };
 
     const device = await dependencies.bluetooth.requestDevice(requestOptions);
 
@@ -197,8 +203,52 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     });
 
     const server = await device.gatt.connect();
-    const service = await server.getPrimaryService(serviceUuid);
-    const characteristic = await service.getCharacteristic(characteristicUuid);
+    
+    // Attempt to locate matching GATT Service with fallback
+    let service: BluetoothService | null = null;
+    let usedServiceUuid = serviceUuid;
+
+    try {
+      service = await server.getPrimaryService(serviceUuid);
+    } catch {
+      log(`指定服務 UUID (${serviceUuid}) 未在裝置找到，嘗試備用藍牙服務 (HM-10/Nordic)...`, true);
+      for (const fallbackUuid of ['0000ffe0-0000-1000-8000-00805f9b34fb', '6e400001-b5a3-f393-e0a9-e50e24dcca9e']) {
+        try {
+          service = await server.getPrimaryService(fallbackUuid);
+          usedServiceUuid = fallbackUuid;
+          log(`成功找到備用藍牙服務: ${fallbackUuid}`);
+          break;
+        } catch {
+          // continue checking
+        }
+      }
+    }
+
+    if (!service) {
+      throw new Error(`在裝置上記錄不到相容的藍牙服務，請確認 ESP32 韌體或刷入專案預設韌體。`);
+    }
+
+    // Attempt characteristic discovery
+    let characteristic: BluetoothCharacteristic | null = null;
+    try {
+      characteristic = await service.getCharacteristic(characteristicUuid);
+    } catch {
+      log(`指定特徵 UUID (${characteristicUuid}) 未找到，嘗試讀取服務預設寫入特徵...`, true);
+      const fallbackCharUuids = ['beb5483e-36e1-4688-b7f5-ea07361b26a8', '0000ffe1-0000-1000-8000-00805f9b34fb', '6e400002-b5a3-f393-e0a9-e50e24dcca9e'];
+      for (const charUuid of fallbackCharUuids) {
+        try {
+          characteristic = await service.getCharacteristic(charUuid);
+          log(`成功連線至特徵: ${charUuid}`);
+          break;
+        } catch {
+          // continue checking
+        }
+      }
+    }
+
+    if (!characteristic) {
+      throw new Error(`找不到可寫入的藍牙特徵。`);
+    }
 
     state.device = device;
     state.characteristic = characteristic;
