@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>無人車 Web BLE 控制面板</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.2) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; padding: 20px; }
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p { color: var(--text-muted); margin: 0; font-size: 15px; }
+
+        .panel-section {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background-color: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+            transition: all 0.3s;
+        }
+        .status-dot.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .input-group input {
+            width: 100%; padding: 10px; border-radius: 8px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+            color: white; font-family: monospace; font-size: 13px;
+            box-sizing: border-box; outline: none;
+        }
+        .input-group input:focus { border-color: var(--primary); }
+
+        .btn {
+            width: 100%; padding: 12px; border-radius: 12px;
+            border: none; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover:not(:disabled) { background: var(--danger); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* D-Pad 樣式 */
+        .d-pad {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .d-pad-row { display: flex; gap: 10px; }
+        .dir-btn {
+            width: 60px; height: 60px; border-radius: 16px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: white; font-size: 20px; font-weight: bold; cursor: pointer;
+            transition: all 0.1s; display: flex; justify-content: center; align-items: center;
+        }
+        .dir-btn:hover:not(:disabled) { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+        .dir-btn:active:not(:disabled) { transform: scale(0.9); background: var(--primary); }
+        .dir-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .stop-btn { border-radius: 50%; color: var(--danger); border-color: var(--danger); font-size: 14px; }
+        .stop-btn:hover:not(:disabled) { background: var(--danger); color: white; }
+        .stop-btn:active:not(:disabled) { background: #b91c1c; }
+
+        .terminal {
+            grid-column: 1 / -1; background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px; padding: 15px; height: 250px;
+            overflow-y: auto; font-family: monospace; font-size: 13px;
+            border: 1px solid var(--border); color: #cbd5e1;
+        }
+        .log-time { color: var(--text-muted); margin-right: 8px; }
+        .log-error { color: var(--danger); }
+        .keyboard-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 15px; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header">
+            <h1>Web BLE 無人車駕駛艙</h1>
+            <p>瀏覽器短距離連線最佳方案 - 透過 GraphQL Mutation 執行 Web BLE 控制流程</p>
+        </div>
+
+        <!-- 連線設定區 -->
+        <div class="panel-section">
+            <div class="section-title">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">未連線狀態 (Offline)</span>
+            </div>
+            
+            <div class="input-group">
+                <label>服務 UUID (Primary Service)</label>
+                <input type="text" id="uuidService" value="0000ffe0-0000-1000-8000-00805f9b34fb">
+            </div>
+            <div class="input-group">
+                <label>特徵 UUID (Characteristic)</label>
+                <input type="text" id="uuidChar" value="0000ffe1-0000-1000-8000-00805f9b34fb">
+            </div>
+
+            <button class="btn btn-primary" id="btnConnect">啟動步驟 2：掃描無人車裝置</button>
+            <button class="btn btn-danger" id="btnDisconnect" style="display:none; margin-top:10px;">斷開連線</button>
+        </div>
+
+        <!-- 操控區 -->
+        <div class="panel-section">
+            <div class="section-title" style="justify-content: center;">方向控制盤 (步驟 6)</div>
+            
+            <div class="d-pad">
+                <div class="d-pad-row">
+                    <button class="dir-btn" id="btnW" disabled title="前進 (W)">W</button>
+                </div>
+                <div class="d-pad-row">
+                    <button class="dir-btn" id="btnA" disabled title="左轉 (A)">A</button>
+                    <button class="dir-btn stop-btn" id="btnSpace" disabled title="煞車 (空白鍵)">停</button>
+                    <button class="dir-btn" id="btnD" disabled title="右轉 (D)">D</button>
+                </div>
+                <div class="d-pad-row">
+                    <button class="dir-btn" id="btnS" disabled title="後退 (S)">S</button>
+                </div>
+            </div>
+            <div class="keyboard-hint">✨ 支援實體鍵盤 WASD 操作，空白鍵為煞車</div>
+        </div>
+
+        <!-- 日誌終端區 -->
+        <div class="terminal" id="terminal">
+            <div>🚀 系統就緒。在此檢視程式碼背後的 6 大步驟：</div>
+        </div>
+    </div>
+
+    <script>
+        const UI = {
+            btnCnn: document.getElementById('btnConnect'),
+            btnDsc: document.getElementById('btnDisconnect'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            term: document.getElementById('terminal'),
+            inpSrv: document.getElementById('uuidService'),
+            inpChr: document.getElementById('uuidChar'),
+            w: document.getElementById('btnW'),
+            a: document.getElementById('btnA'),
+            s: document.getElementById('btnS'),
+            d: document.getElementById('btnD'),
+            space: document.getElementById('btnSpace')
+        };
+
+        let device;
+        let characteristic;
+
+        const GraphQLOperations = {
+            vehicleStatus: `
+                query VehicleStatus {
+                    vehicleStatus {
+                        connected
+                        deviceName
+                    }
+                }
+            `,
+            connectVehicle: `
+                mutation ConnectVehicle($serviceUuid: ID!, $characteristicUuid: ID!) {
+                    connectVehicle(serviceUuid: $serviceUuid, characteristicUuid: $characteristicUuid) {
+                        connected
+                        deviceName
+                    }
+                }
+            `,
+            disconnectVehicle: `
+                mutation DisconnectVehicle {
+                    disconnectVehicle {
+                        connected
+                    }
+                }
+            `,
+            sendVehicleCommand: `
+                mutation SendVehicleCommand($command: VehicleCommand!, $label: String!) {
+                    sendVehicleCommand(command: $command, label: $label) {
+                        command
+                        label
+                        sent
+                    }
+                }
+            `
+        };
+
+        const GraphQLSchema = `
+            enum VehicleCommand {
+                F
+                B
+                L
+                R
+                S
+            }
+
+            type VehicleStatus {
+                connected: Boolean!
+                deviceName: String
+            }
+
+            type CommandResult {
+                command: VehicleCommand!
+                label: String!
+                sent: Boolean!
+            }
+
+            type Query {
+                vehicleStatus: VehicleStatus!
+            }
+
+            type Mutation {
+                connectVehicle(serviceUuid: ID!, characteristicUuid: ID!): VehicleStatus!
+                disconnectVehicle: VehicleStatus!
+                sendVehicleCommand(command: VehicleCommand!, label: String!): CommandResult!
+            }
+        `;
+
+        function log(msg, error = false) {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, fractionalSecondDigits: 3 });
+            const div = document.createElement('div');
+            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${error ? 'log-error' : ''}">${msg}</span>`;
+            UI.term.appendChild(div);
+            UI.term.scrollTop = UI.term.scrollHeight;
+        }
+
+        function updateState(connected) {
+            if (connected) {
+                UI.statusDot.classList.add('connected');
+                UI.statusText.textContent = '已連線就緒 (Online)';
+                UI.btnCnn.style.display = 'none';
+                UI.btnDsc.style.display = 'block';
+                [UI.w, UI.a, UI.s, UI.d, UI.space].forEach(b => b.disabled = false);
+            } else {
+                UI.statusDot.classList.remove('connected');
+                UI.statusText.textContent = '未連線狀態 (Offline)';
+                UI.btnCnn.style.display = 'flex';
+                UI.btnDsc.style.display = 'none';
+                [UI.w, UI.a, UI.s, UI.d, UI.space].forEach(b => b.disabled = true);
+                characteristic = null;
+            }
+        }
+
+        function getVehicleStatus() {
+            return {
+                connected: Boolean(characteristic && device?.gatt?.connected),
+                deviceName: device?.name || null
+            };
+        }
+
+        async function connectVehicleResolver({ serviceUuid, characteristicUuid }) {
+            const S_UUID = serviceUuid.trim().toLowerCase();
+            const C_UUID = characteristicUuid.trim().toLowerCase();
+
+            try {
+                log("📡 GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)");
+
+                // 步驟 2: 請求與掃描裝置
+                log("📌 [步驟 2] 呼叫 navigator.bluetooth.requestDevice()... 請選擇設備");
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [S_UUID] }]
+                });
+
+                device.addEventListener('gattserverdisconnected', () => {
+                    log("⚠️ 藍牙連線遺失！硬體離線或超出預期距離。", true);
+                    updateState(false);
+                });
+
+                // 步驟 3: 連接 GATT 伺服器
+                log(`📌 [步驟 3] 匹配到 [${device.name || '未知設備'}]，呼叫 device.gatt.connect()...`);
+                const server = await device.gatt.connect();
+
+                // 步驟 4: 獲取主服務
+                log(`📌 [步驟 4] 呼叫 server.getPrimaryService('${S_UUID}')...`);
+                const service = await server.getPrimaryService(S_UUID);
+
+                // 步驟 5: 綁定通訊特徵
+                log(`📌 [步驟 5] 呼叫 service.getCharacteristic('${C_UUID}')...`);
+                characteristic = await service.getCharacteristic(C_UUID);
+
+                log(`✅ 連線完美建立！現在可以點擊方向盤按鈕送出控制指令了。`);
+                updateState(true);
+                return getVehicleStatus();
+
+            } catch (error) {
+                if (error.name === 'NotFoundError') {
+                    log("❌ 使用者取消，或是附近沒有符合該 UUID 的無人車裝置。", true);
+                } else {
+                    log(`❌ 連線失敗: ${error.message}`, true);
+                }
+                throw error;
+            }
+        }
+
+        async function disconnectVehicleResolver() {
+            log("📡 GraphQL Mutation: disconnectVehicle");
+            if (device?.gatt?.connected) {
+                device.gatt.disconnect();
+            }
+            updateState(false);
+            return getVehicleStatus();
+        }
+
+        async function sendVehicleCommandResolver({ command, label }) {
+            if (!characteristic) {
+                throw new Error('尚未連線到可寫入的藍牙特徵。');
+            }
+
+            try {
+                // 將字串 'F', 'B' 等轉換為二進位元組 (Uint8Array) 以符合藍牙底層傳輸
+                const data = new TextEncoder().encode(command);
+                await characteristic.writeValue(data);
+                log(`>> 📡 GraphQL Mutation: sendVehicleCommand(command: ${command}, label: "${label}")`);
+                log(`>> 📌 [步驟 6] 呼叫 characteristic.writeValue()... 送出 '${command}' (${label})`);
+                return { command, label, sent: true };
+            } catch (error) {
+                log(`❌ 發送指令失敗: ${error}`, true);
+                throw error;
+            }
+        }
+
+        const graphQLResolvers = {
+            Query: {
+                vehicleStatus: getVehicleStatus
+            },
+            Mutation: {
+                connectVehicle: connectVehicleResolver,
+                disconnectVehicle: disconnectVehicleResolver,
+                sendVehicleCommand: sendVehicleCommandResolver
+            }
+        };
+
+        const vehicleGraphQLApi = {
+            schema: GraphQLSchema,
+            execute: executeGraphQL
+        };
+
+        async function executeGraphQL({ query, variables = {} }) {
+            const trimmedQuery = query.replace(/\s+/g, ' ').trim();
+            const operationName = trimmedQuery.match(/(?:query|mutation)\s+(\w+)/)?.[1];
+
+            switch (operationName) {
+                case 'VehicleStatus':
+                    return { data: { vehicleStatus: graphQLResolvers.Query.vehicleStatus() } };
+                case 'ConnectVehicle':
+                    return {
+                        data: {
+                            connectVehicle: await graphQLResolvers.Mutation.connectVehicle({
+                                serviceUuid: variables.serviceUuid,
+                                characteristicUuid: variables.characteristicUuid
+                            })
+                        }
+                    };
+                case 'DisconnectVehicle':
+                    return { data: { disconnectVehicle: await graphQLResolvers.Mutation.disconnectVehicle() } };
+                case 'SendVehicleCommand':
+                    return {
+                        data: {
+                            sendVehicleCommand: await graphQLResolvers.Mutation.sendVehicleCommand({
+                                command: variables.command,
+                                label: variables.label
+                            })
+                        }
+                    };
+                default:
+                    throw new Error(`Unknown GraphQL operation: ${operationName || trimmedQuery}`);
+            }
+        }
+
+        async function connectVehicle() {
+            try {
+                await vehicleGraphQLApi.execute({
+                    query: GraphQLOperations.connectVehicle,
+                    variables: {
+                        serviceUuid: UI.inpSrv.value,
+                        characteristicUuid: UI.inpChr.value
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 步驟 6: 將控制指令寫入車子
+        async function sendCommand(command, label) {
+            if (!characteristic) return;
+            try {
+                await vehicleGraphQLApi.execute({
+                    query: GraphQLOperations.sendVehicleCommand,
+                    variables: { command, label }
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 綁定連線與斷線按鈕
+        UI.btnCnn.addEventListener('click', connectVehicle);
+        UI.btnDsc.addEventListener('click', () => {
+            vehicleGraphQLApi.execute({ query: GraphQLOperations.disconnectVehicle }).catch((error) => {
+                log(`❌ 斷線失敗: ${error.message}`, true);
+            });
+        });
+
+        // 綁定控制按鈕 (自帶預防連點、簡單的事件模擬)
+        UI.w.onmousedown = () => sendCommand('F', '前進');
+        UI.s.onmousedown = () => sendCommand('B', '後退');
+        UI.a.onmousedown = () => sendCommand('L', '左轉');
+        UI.d.onmousedown = () => sendCommand('R', '右轉');
+        UI.space.onmousedown = () => sendCommand('S', '煞車');
+
+        // 綁定實體鍵盤
+        document.addEventListener('keydown', (e) => {
+            if (!characteristic || e.repeat) return; // 避免長按導致無限連續發送卡死通道
+            const k = e.key.toUpperCase();
+            if (k === 'W') { UI.w.onmousedown(); UI.w.style.background = 'var(--primary)'; }
+            if (k === 'S') { UI.s.onmousedown(); UI.s.style.background = 'var(--primary)'; }
+            if (k === 'A') { UI.a.onmousedown(); UI.a.style.background = 'var(--primary)'; }
+            if (k === 'D') { UI.d.onmousedown(); UI.d.style.background = 'var(--primary)'; }
+            if (k === ' ' || k === 'SPACE') { e.preventDefault(); UI.space.onmousedown(); UI.space.style.background = '#b91c1c'; }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const k = e.key.toUpperCase();
+            // 恢復原本樣式
+            if (k === 'W') UI.w.style.background = '';
+            if (k === 'S') UI.s.style.background = '';
+            if (k === 'A') UI.a.style.background = '';
+            if (k === 'D') UI.d.style.background = '';
+            if (k === ' ' || k === 'SPACE') UI.space.style.background = '';
+        });
+
+        // ================= 步驟 1 =================
+        if (!navigator.bluetooth) {
+            log("📌 [步驟 1] 確保環境與支援度 - ❌ 失敗。瀏覽器不支援 Web BLE 或未在 HTTPS/localhost 環境下運行。", true);
+            UI.btnCnn.disabled = true;
+            UI.btnCnn.innerText = "瀏覽器不支援藍牙 API";
+        } else {
+            log("📌 [步驟 1] 確保環境與支援度 - ✅ 成功。支援 Web BLE，可隨時呼叫 navigator.bluetooth。");
+            log(`📡 GraphQL Schema 已載入 (${vehicleGraphQLApi.schema.length} chars)，控制流程將透過 Query / Mutation 執行。`);
+        }
+    </script>
+</body>
+</html>
