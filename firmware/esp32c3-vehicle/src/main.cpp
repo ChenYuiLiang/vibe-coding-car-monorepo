@@ -144,12 +144,18 @@ bool validateFirmwareHeader(const uint8_t* headerData, size_t len, String &error
 
 // HTTP API Handlers
 void handleRoot() {
-    String html = "<html><head><title>ESP32-C3 Vehicle Control & OTA</title></head>body>";
-    html += "<h1>ESP32-C3 Vibe Coding Vehicle Node</h1>";
-    html += "<p>Status: " + String(deviceConnected ? "BLE Connected" : "Ready") + "</p>";
-    html += "<p>Watchdog Safety Stop: 500ms Active</p>";
-    html += "<p>OTA Pre-flashing Validation Endpoint: <code>POST /api/ota/validate</code></p>";
-    html += "</body></html>";
+    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><title>ESP32-C3 Vehicle OTA Management</title>";
+    html += "<style>body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:2rem;}";
+    html += ".card{background:#1e293b;border-radius:1rem;padding:2rem;max-width:500px;margin:auto;box-shadow:0 10px 25px rgba(0,0,0,0.5);}";
+    html += "input[type=file]{margin:1rem 0;display:block;color:#94a3b8;}";
+    html += "input[type=submit]{background:#0284c7;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;font-weight:bold;cursor:pointer;width:100%;}</style></head><body>";
+    html += "<div class='card'><h2>🚗 ESP32-C3 Vibe Car OTA Web Portal</h2>";
+    html += "<p>Status: <strong>" + String(deviceConnected ? "BLE Connected" : "Ready") + "</strong></p>";
+    html += "<p>Watchdog Safety: 500ms Active</p>";
+    html += "<form method='POST' action='/update' enctype='multipart/form-data'>";
+    html += "<label>選擇二進位韌體 (.bin):</label><input type='file' name='update' accept='.bin' required>";
+    html += "<input type='submit' value='確認並開始 OTA 無線升級'>";
+    html += "</form></div></body></html>";
     server.send(200, "text/html", html);
 }
 
