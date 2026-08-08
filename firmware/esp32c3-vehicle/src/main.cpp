@@ -151,7 +151,7 @@ bool validateFirmwareHeader(const uint8_t* headerData, size_t len, String &error
 // WiFi Self-Healing & Provisioning Logic
 void initWiFiSelfHealing() {
     preferences.begin("vibe_wifi", false);
-    savedSsid = preferences.getString("ssid", "");
+    savedSsid = preferences.getString("ssid", "chen");
     savedPass = preferences.getString("pass", "");
 
     WiFi.mode(WIFI_AP_STA);
