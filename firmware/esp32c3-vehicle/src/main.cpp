@@ -3,6 +3,8 @@
 #include <WebServer.h>
 #include <Update.h>
 #include <NimBLEDevice.h>
+#include <Preferences.h>
+#include <ESPmDNS.h>
 
 // BLE Protocol Constants (Sync with packages/protocol)
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -27,6 +29,13 @@ unsigned long lastPacketTime = 0;
 bool emergencyStopTriggered = false;
 int currentVelocity = 0;
 int currentAngular = 0;
+
+// WiFi Self-Healing State & Preferences
+Preferences preferences;
+String savedSsid = "";
+String savedPass = "";
+bool isStaConnected = false;
+String localIpStr = "";
 
 WebServer server(80);
 
@@ -139,20 +148,86 @@ bool validateFirmwareHeader(const uint8_t* headerData, size_t len, String &error
     return true;
 }
 
+// WiFi Self-Healing & Provisioning Logic
+void initWiFiSelfHealing() {
+    preferences.begin("vibe_wifi", false);
+    savedSsid = preferences.getString("ssid", "");
+    savedPass = preferences.getString("pass", "");
+
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP("ESP32-Car-AP", "vibe123456");
+    Serial.print("[WiFi AP] SoftAP Created. AP IP: ");
+    Serial.println(WiFi.softAPIP());
+
+    if (savedSsid.length() > 0) {
+        Serial.printf("[WiFi STA] Attempting connection to SSID: '%s' ...\n", savedSsid.c_str());
+        WiFi.begin(savedSsid.c_str(), savedPass.c_str());
+
+        unsigned long startAttempt = millis();
+        while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 8000) {
+            delay(250);
+            Serial.print(".");
+        }
+        Serial.println();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            isStaConnected = true;
+            localIpStr = WiFi.localIP().toString();
+            Serial.printf("[WiFi STA SUCCESS] Connected to '%s'! Local IP: %s\n", savedSsid.c_str(), localIpStr.c_str());
+        } else {
+            isStaConnected = false;
+            Serial.println("[WiFi STA TIMEOUT] Could not connect to target SSID. Fallback to AP Mode!");
+        }
+    } else {
+        Serial.println("[WiFi STA] No saved SSID in NVS. AP Mode Active.");
+    }
+
+    if (MDNS.begin("esp32-car")) {
+        Serial.println("[mDNS] Responder started. Access domain: http://esp32-car.local");
+    }
+}
+
 // HTTP API Handlers
 void handleRoot() {
-    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><title>ESP32-C3 Vehicle OTA Management</title>";
-    html += "<style>body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:2rem;}";
-    html += ".card{background:#1e293b;border-radius:1rem;padding:2rem;max-width:500px;margin:auto;box-shadow:0 10px 25px rgba(0,0,0,0.5);}";
-    html += "input[type=file]{margin:1rem 0;display:block;color:#94a3b8;}";
-    html += "input[type=submit]{background:#0284c7;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;font-weight:bold;cursor:pointer;width:100%;}</style></head><body>";
-    html += "<div class='card'><h2>🚗 ESP32-C3 Vibe Car OTA Web Portal</h2>";
-    html += "<p>Status: <strong>" + String(deviceConnected ? "BLE Connected" : "Ready") + "</strong></p>";
-    html += "<p>Watchdog Safety: 500ms Active</p>";
+    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ESP32-C3 Vehicle Control & OTA</title>";
+    html += "<style>body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:1.5rem;margin:0;}";
+    html += ".card{background:#1e293b;border-radius:1rem;padding:1.5rem;max-width:520px;margin:auto;box-shadow:0 10px 25px rgba(0,0,0,0.5);margin-bottom:1.5rem;}";
+    html += "input[type=text],input[type=password],input[type=file]{width:100%;box-sizing:border-box;margin:0.5rem 0 1rem 0;padding:0.75rem;background:#090d16;border:1px solid #334155;border-radius:0.5rem;color:#38bdf8;}";
+    html += "input[type=submit],button{background:#0284c7;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;font-weight:bold;cursor:pointer;width:100%;margin-top:0.5rem;}";
+    html += "button.danger{background:#e11d48;}</style></head><body>";
+
+    html += "<div class='card'><h2>🚗 ESP32-C3 遙控車 OTA & WiFi 設定</h2>";
+    html += "<p>BLE 狀態: <strong>" + String(deviceConnected ? "🟢 已連線" : "⚪ 未連線") + "</strong></p>";
+    html += "<p>Watchdog 保護: <strong>500ms 自動急停</strong></p>";
+    html += "<p>mDNS 域名: <strong><a href='http://esp32-car.local' style='color:#38bdf8;'>http://esp32-car.local</a></strong></p>";
+
+    if (isStaConnected) {
+        html += "<p style='color:#4ade80;'>📶 WiFi STA 狀態: <strong>已連至 '" + savedSsid + "' (IP: " + localIpStr + ")</strong></p>";
+    } else {
+        html += "<p style='color:#fbbf24;'>📶 WiFi AP 狀態: <strong>AP 備援模式 (AP IP: 192.168.4.1)</strong></p>";
+    }
+
+    html += "<hr style='border:0;border-top:1px solid #334155;margin:1.5rem 0;'>";
+    html += "<h3>🚀 線上 OTA 無線韌體升級</h3>";
     html += "<form method='POST' action='/update' enctype='multipart/form-data'>";
-    html += "<label>選擇二進位韌體 (.bin):</label><input type='file' name='update' accept='.bin' required>";
-    html += "<input type='submit' value='確認並開始 OTA 無線升級'>";
-    html += "</form></div></body></html>";
+    html += "<label>選擇韌體二進位檔 (.bin):</label><input type='file' name='update' accept='.bin' required>";
+    html += "<input type='submit' value='確認規範並開始 OTA 燒錄'>";
+    html += "</form></div>";
+
+    html += "<div class='card'><h3>📶 WiFi 配網 (Provisioning Settings)</h3>";
+    html += "<form method='POST' action='/api/wifi/config'>";
+    html += "<label>WiFi SSID (無線網路名稱):</label><input type='text' name='ssid' value='" + savedSsid + "' placeholder='例如: chen' required>";
+    html += "<label>WiFi 密碼 (Password):</label><input type='password' name='pass' value='" + savedPass + "' placeholder='WiFi 密碼'>";
+    html += "<input type='submit' value='儲存 WiFi 設定並連線至 STA 模式'>";
+    html += "</form>";
+
+    if (savedSsid.length() > 0) {
+        html += "<form method='POST' action='/api/wifi/clear' style='margin-top:1rem;'>";
+        html += "<button type='submit' class='danger'>清除 WiFi 紀錄 (復原為純 AP 模式)</button>";
+        html += "</form>";
+    }
+
+    html += "</div></body></html>";
     server.send(200, "text/html", html);
 }
 
@@ -162,7 +237,12 @@ void handleStatus() {
     json += "\"watchdogTimeout\":" + String(WATCHDOG_TIMEOUT_MS) + ",";
     json += "\"emergencyStop\":" + String(emergencyStopTriggered ? "true" : "false") + ",";
     json += "\"v\":" + String(currentVelocity) + ",";
-    json += "\"w\":" + String(currentAngular);
+    json += "\"w\":" + String(currentAngular) + ",";
+    json += "\"isStaConnected\":" + String(isStaConnected ? "true" : "false") + ",";
+    json += "\"staSsid\":\"" + savedSsid + "\",";
+    json += "\"localIp\":\"" + localIpStr + "\",";
+    json += "\"apIp\":\"192.168.4.1\",";
+    json += "\"mdnsUrl\":\"http://esp32-car.local\"";
     json += "}";
     server.send(200, "application/json", json);
 }
@@ -177,6 +257,29 @@ void setupWebServer() {
         int w = server.hasArg("w") ? server.arg("w").toInt() : 0;
         driveVehicle(v, w);
         server.send(200, "application/json", "{\"status\":\"ok\",\"v\":" + String(v) + ",\"w\":" + String(w) + "}");
+    });
+
+    // WiFi Provisioning Config Endpoint
+    server.on("/api/wifi/config", HTTP_POST, []() {
+        String ssid = server.arg("ssid");
+        String pass = server.arg("pass");
+        if (ssid.length() > 0) {
+            preferences.putString("ssid", ssid);
+            preferences.putString("pass", pass);
+            server.send(200, "text/html", "<html><body><h2>WiFi 設定已儲存！</h2><p>ESP32 正在重啟並連線至 '" + ssid + "' ...</p><script>setTimeout(()=>{location.href='http://esp32-car.local';}, 5000);</script></body></html>");
+            delay(1000);
+            ESP.restart();
+        } else {
+            server.send(400, "text/plain", "SSID 不能為空");
+        }
+    });
+
+    // WiFi Clear Endpoint
+    server.on("/api/wifi/clear", HTTP_POST, []() {
+        preferences.clear();
+        server.send(200, "text/html", "<html><body><h2>WiFi 紀錄已清除！</h2><p>ESP32 正在重啟並恢復為 AP 模式 (192.168.4.1) ...</p></body></html>");
+        delay(1000);
+        ESP.restart();
     });
 
     // OTA Flashing Handler with Pre-Flashing Rule Checks
@@ -262,10 +365,8 @@ void setup() {
 
     setupHardwarePins();
 
-    // WiFi AP Initialization
-    WiFi.softAP("ESP32-Car-AP", "vibe123456");
-    Serial.print("[WiFi AP] SoftAP Created. IP: ");
-    Serial.println(WiFi.softAPIP());
+    // WiFi Self-Healing & Provisioning Initialization
+    initWiFiSelfHealing();
 
     setupWebServer();
 
