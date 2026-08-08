@@ -2,9 +2,12 @@ import fs from 'fs';
 import http from 'http';
 
 function uploadOta() {
-  const binPath = './firmware_esp32c3_vibe_car.bin';
+  let binPath = './firmware_esp32c3_vibe_car_slim.bin';
   if (!fs.existsSync(binPath)) {
-    console.error('❌ 找不到韌體檔案 firmware_esp32c3_vibe_car.bin');
+    binPath = './firmware_esp32c3_vibe_car.bin';
+  }
+  if (!fs.existsSync(binPath)) {
+    console.error('❌ 找不到韌體檔案');
     process.exit(1);
   }
 
