@@ -278,7 +278,8 @@ void setupWebServer() {
             server.send(500, "text/plain", "OTA Flashing Failed: " + String(Update.getError()));
         } else {
             server.send(200, "text/plain", "OTA Flashing Successful! Restarting ESP32-C3...");
-            delay(1000);
+            server.client().flush();
+            delay(1500);
             ESP.restart();
         }
     }, []() {
