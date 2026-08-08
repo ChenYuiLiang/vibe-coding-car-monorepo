@@ -4,3 +4,7 @@ dist
 .turbo
 coverage
 .DS_Store
+*.log
+.env
+.env.*
+apps/docs-site/

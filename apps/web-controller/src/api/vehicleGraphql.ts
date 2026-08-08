@@ -1,5 +1,13 @@
 export type VehicleCommand = 'F' | 'B' | 'L' | 'R' | 'S';
 
+/** Mirrors packages/protocol encodePacket — keep in sync. */
+function encodeDrivePacket(v: number, w: number): Uint8Array {
+  const vNorm = Math.min(255, Math.max(0, Math.round(v + 128)));
+  const wNorm = Math.min(255, Math.max(0, Math.round(w + 128)));
+  const checksum = (vNorm + wNorm) & 0xff;
+  return Uint8Array.from([0xff, vNorm, wNorm, checksum]);
+}
+
 export interface VehicleStatus {
   connected: boolean;
   deviceName: string | null;
@@ -163,7 +171,6 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     characteristic: null
   };
 
-  const encoder = dependencies.encoder ?? new TextEncoder();
   const log = dependencies.onLog ?? (() => undefined);
   const setConnected = (connected: boolean): void => dependencies.onConnectionChange?.(connected);
 
@@ -291,8 +298,17 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
       throw new Error('尚未連線到可寫入的藍牙特徵。');
     }
 
-    await state.characteristic.writeValue(encoder.encode(variables.command));
-    log(`GraphQL Mutation: sendVehicleCommand(command: ${variables.command}, label: "${variables.label}")`);
+    let v = 0;
+    let w = 0;
+    if (variables.command === 'F') { v = 100; w = 0; }
+    else if (variables.command === 'B') { v = -100; w = 0; }
+    else if (variables.command === 'L') { v = 0; w = -100; }
+    else if (variables.command === 'R') { v = 0; w = 100; }
+    else { v = 0; w = 0; } // 'S' stop
+
+    const packet = encodeDrivePacket(v, w);
+    await state.characteristic.writeValue(packet as BufferSource);
+    log(`GraphQL Mutation: sendVehicleCommand(command: ${variables.command}, label: "${variables.label}") → [${Array.from(packet).map((b) => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
     return {
       command: variables.command,
       label: variables.label,

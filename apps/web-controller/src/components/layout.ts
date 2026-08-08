@@ -94,7 +94,8 @@ export function renderDashboard(): string {
                   <input id="espIpAddress" value="192.168.4.1" class="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-emerald-300 outline-none focus:border-emerald-400" />
                 </label>
                 <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[11px] text-emerald-200 leading-relaxed">
-                  💡 <strong>WiFi 雙模提示</strong>：手機/電腦只需連接 ESP32 WiFi 基地台 (<code>ESP32-Car-AP</code>，密碼：<code>vibe123456</code>)，即可免藍牙配對直連操控！
+                  💡 <strong>WiFi 提示</strong>：連接 <code>ESP32-Car-AP</code>，密碼 <code>vibe123456</code> → 開 <code>http://192.168.4.1</code> 配網／OTA。STA 連上家用 WiFi 後熱點會關閉；斷線會自動退回 AP。<br/>
+                  🏭 <strong>Factory reset</strong>：長按板上 <code>BOOT</code>（開機 3 秒／運行中 5 秒）清除 WiFi。按 <code>RESET</code> 只重開、不會清設定。
                 </div>
               </div>
             </div>

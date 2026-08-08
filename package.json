@@ -2,12 +2,11 @@
   "name": "vibe-coding-car-monorepo",
   "version": "1.0.0",
   "private": true,
+  "description": "Curriculum monorepo: Web remote controller + ESP32-C3 vehicle firmware + shared protocol",
   "packageManager": "npm@10.8.2",
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "firmware/*",
-    "curriculum/*"
+    "packages/*"
   ],
   "scripts": {
     "dev": "npx turbo run dev",

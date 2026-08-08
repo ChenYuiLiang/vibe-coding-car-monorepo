@@ -3,8 +3,22 @@
 export const BLE_CONFIG = {
   SERVICE_UUID: '4fafc201-1fb5-459e-8fcc-c5c9c331914b',
   CHARACTERISTIC_UUID: 'beb5483e-36e1-4688-b7f5-ea07361b26a8',
-  DEVICE_NAME_PREFIX: 'ESP32-Car'
+  DEVICE_NAME_PREFIX: 'ESP32-Car',
+  /** 0xAA opcode + confirm byte → clear WiFi NVS and reboot to SoftAP */
+  FACTORY_WIFI_OPCODE: 0xf1,
+  FACTORY_WIFI_CONFIRM: 0xa5
 };
+
+/** Encode curriculum [0xAA, opcode, speed, checksum] packet */
+export function encodeAaPacket(opcode: number, speed: number): Uint8Array {
+  const op = opcode & 0xff;
+  const sp = speed & 0xff;
+  return new Uint8Array([0xaa, op, sp, (op + sp) & 0xff]);
+}
+
+export function encodeFactoryWifiClearPacket(): Uint8Array {
+  return encodeAaPacket(BLE_CONFIG.FACTORY_WIFI_OPCODE, BLE_CONFIG.FACTORY_WIFI_CONFIRM);
+}
 
 export const OTA_CONFIG = {
   ESP32_MAGIC_BYTE: 0xE9,
@@ -138,13 +152,19 @@ export function validateFirmwareBinary(binary: Uint8Array): FirmwareValidationRe
       targetChip = 'ESP32-C3';
     } else if (header.targetChipId === 0x00) {
       targetChip = 'ESP32 Classic';
+      errors.push('韌體 Chip ID 為 ESP32 Classic (0x00)，本專案僅接受 ESP32-C3 (0x05)');
     } else if (header.targetChipId === 0x02) {
       targetChip = 'ESP32-S2';
+      errors.push('韌體 Chip ID 為 ESP32-S2，本專案僅接受 ESP32-C3 (0x05)');
     } else if (header.targetChipId === 0x09) {
       targetChip = 'ESP32-S3';
+      errors.push('韌體 Chip ID 為 ESP32-S3，本專案僅接受 ESP32-C3 (0x05)');
     } else {
       targetChip = `ESP Chip ID: 0x${header.targetChipId.toString(16)}`;
+      errors.push(`韌體 Chip ID 不符 (0x${header.targetChipId.toString(16)})，預期 ESP32-C3 = 0x05`);
     }
+  } else {
+    warnings.push('無法讀取 Chip ID（檔案 < 13 bytes header）');
   }
 
   if (fileSize < 10000) {

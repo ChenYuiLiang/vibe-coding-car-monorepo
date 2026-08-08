@@ -184,7 +184,7 @@ async function connectWifiVehicle(): Promise<void> {
   } catch (err) {
     wifiConnected = false;
     updateConnectionState(false);
-    log(`[WiFi HTTP Error] 無法連線至 ${url}。請確認手機/電腦已連接 ESP32 WiFi 基地台 (ESP32-Car-AP)。`, true);
+    log(`[WiFi HTTP Error] 無法連線至 ${url}。請確認已連 ESP32-Car-AP（密碼 vibe123456）或家用 WiFi 的裝置 IP / esp32-car.local。`, true);
   }
 }
 
@@ -336,11 +336,25 @@ ui.buttons.a.addEventListener('mousedown', () => sendCommand('L', '左轉'));
 ui.buttons.d.addEventListener('mousedown', () => sendCommand('R', '右轉'));
 ui.buttons.space.addEventListener('mousedown', () => sendCommand('S', '煞車'));
 
+const releaseStop = () => { void sendCommand('S', '鬆開急停'); };
+ui.buttons.w.addEventListener('mouseup', releaseStop);
+ui.buttons.s.addEventListener('mouseup', releaseStop);
+ui.buttons.a.addEventListener('mouseup', releaseStop);
+ui.buttons.d.addEventListener('mouseup', releaseStop);
+ui.buttons.w.addEventListener('mouseleave', releaseStop);
+ui.buttons.s.addEventListener('mouseleave', releaseStop);
+ui.buttons.a.addEventListener('mouseleave', releaseStop);
+ui.buttons.d.addEventListener('mouseleave', releaseStop);
+
 ui.buttons.w.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('F', '前進'); });
 ui.buttons.s.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('B', '後退'); });
 ui.buttons.a.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('L', '左轉'); });
 ui.buttons.d.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('R', '右轉'); });
 ui.buttons.space.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('S', '煞車'); });
+ui.buttons.w.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
+ui.buttons.s.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
+ui.buttons.a.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
+ui.buttons.d.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
 
 document.addEventListener('keydown', (event) => {
   const isOnline = currentMode === 'BLE' ? api.getStatus().connected : wifiConnected;

@@ -216,7 +216,7 @@ describe('vehicle GraphQL API', () => {
       label: '前進',
       sent: true
     });
-    expect(mock.writeValue).toHaveBeenCalledTimes(1);
+    expect(mock.writeValue).toHaveBeenCalledWith(Uint8Array.from([0xff, 228, 128, (228 + 128) & 0xff]));
   });
 
   it('disconnects and reports offline status', async () => {
