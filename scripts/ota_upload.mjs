@@ -11,8 +11,8 @@ function uploadOta() {
     process.exit(1);
   }
 
-  const fileBuffer = fs.readFileSync(binPath);
-  console.log(`\n🚀 [OTA Node Uploader] 準備上傳韌體二進位檔 (${(fileBuffer.length / 1024 / 1024).toFixed(2)} MB) 至 http://192.168.4.1/update ...`);
+  const fileSize = fs.statSync(binPath).size;
+  console.log(`\n🚀 [OTA Node Uploader] 準備上傳韌體二進位檔 (${(fileSize / 1024 / 1024).toFixed(2)} MB) 至 http://192.168.4.1/update ...`);
 
   const boundary = '--------------------------' + Math.random().toString(36).substring(2, 16);
   
@@ -26,7 +26,7 @@ function uploadOta() {
   const headerBuf = Buffer.from(headerText, 'utf-8');
   const footerBuf = Buffer.from(footerText, 'utf-8');
 
-  const totalLength = headerBuf.length + fileBuffer.length + footerBuf.length;
+  const totalLength = headerBuf.length + fileSize + footerBuf.length;
 
   const req = http.request({
     hostname: '192.168.4.1',
@@ -35,7 +35,8 @@ function uploadOta() {
     method: 'POST',
     headers: {
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
-      'Content-Length': totalLength
+      'Content-Length': totalLength,
+      'Connection': 'close'
     }
   }, (res) => {
     let data = '';
@@ -59,9 +60,22 @@ function uploadOta() {
   });
 
   req.write(headerBuf);
-  req.write(fileBuffer);
-  req.write(footerBuf);
-  req.end();
+
+  // Stream the binary file in 8KB chunks to fit ESP32 LwIP TCP buffer
+  const fileStream = fs.createReadStream(binPath, { highWaterMark: 8192 });
+  
+  fileStream.on('data', (chunk) => {
+    const ok = req.write(chunk);
+    if (!ok) {
+      fileStream.pause();
+      req.once('drain', () => fileStream.resume());
+    }
+  });
+
+  fileStream.on('end', () => {
+    req.write(footerBuf);
+    req.end();
+  });
 }
 
 uploadOta();
