@@ -3,6 +3,23 @@
 課程用 **手機遙控器（Web）** + **ESP32-C3 車端韌體** + **共享通訊協定** + Integration Lab 說明。  
 其他人可直接 clone，改遙控器或韌體後用 OTA／USB 燒到實車。
 
+## 你能做什麼？
+
+| 情境 | 可不可以只靠 clone + OTA？ |
+|------|---------------------------|
+| 車已能開網頁（STA IP 或 SoftAP `192.168.4.1`） | **可以** — 改遙控器／韌體後 OTA |
+| 全新空板、或無 AP／無 STA／無 BLE | **不行** — 先用 USB 救援包燒一次，之後才能 OTA |
+
+詳細多台 OTA：[`docs/OTA-FLEET-GUIDE.md`](docs/OTA-FLEET-GUIDE.md)  
+USB／踩坑：[`docs/FIRMWARE-PLAYBOOK.md`](docs/FIRMWARE-PLAYBOOK.md)
+
+## 先決條件
+
+- **Node.js + npm**（遙控器、`npm run ota`）
+- **PlatformIO CLI**（`pio`，只有改／建置韌體才需要）
+- 電腦與車在**同一 WiFi**，或暫時連 `ESP32-Car-AP`（密碼 `vibe123456`）
+- OTA 時用**數字 IP**；Mac 上 `esp32-car.local` 常失敗
+
 ## 目錄
 
 ```text
@@ -31,7 +48,7 @@ npm run dev
 npm run test
 ```
 
-### 韌體建置與 OTA
+### 韌體建置與 OTA（車必須已能開 HTTP）
 
 ```bash
 cd firmware/esp32c3-vehicle
@@ -43,10 +60,10 @@ cd ../..
 OTA_HOST=192.168.1.178 npm run ota
 ```
 
-網頁 OTA：開 `http://<車IP>/` → Choose File → **只選**根目錄 `firmware_esp32c3_vibe_car_slim.bin`。
+網頁 OTA：開 `http://<車IP>/` → Choose File → **只選**根目錄 `firmware_esp32c3_vibe_car_slim.bin`。  
+（不要選 OTA-0／OTA-1，也不要選 bootloader／`boot_app0`——那些是 USB 用。）
 
-多台車步驟：[`docs/OTA-FLEET-GUIDE.md`](docs/OTA-FLEET-GUIDE.md)  
-救援／踩坑：[`docs/FIRMWARE-PLAYBOOK.md`](docs/FIRMWARE-PLAYBOOK.md)
+若板上還沒有任何可連的網頁：解壓 `Vibe-Car-ESP32C3-USB-Flashing-Pack-1.0.0.zip`，依包內說明／Playbook §2 燒錄（**必須含 `boot_app0 @ 0xe000`**）。
 
 ### SoftAP（未配網或 STA 失敗時）
 
