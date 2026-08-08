@@ -297,7 +297,7 @@ void setupWebServer() {
                 maxSketchSpace = MAX_FIRMWARE_SIZE_BYTES;
             }
 
-            if (!Update.begin(maxSketchSpace)) {
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
                 otaValidationStatus.errorReason = "Partition space unavailable for OTA update";
                 Serial.println("[OTA Error] Update.begin failed!");
                 return;
