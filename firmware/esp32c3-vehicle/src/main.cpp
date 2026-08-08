@@ -2,9 +2,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Update.h>
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
+#include <NimBLEDevice.h>
 
 // BLE Protocol Constants (Sync with packages/protocol)
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -33,16 +31,15 @@ int currentAngular = 0;
 WebServer server(80);
 
 // Pre-flash OTA Validation Status
-struct OTAValidationState {
+struct OTAValidationStatus {
     bool passed;
     String errorReason;
-    size_t totalSize;
     String chipTarget;
-} otaValidationStatus = {false, "", 0, ""};
+    size_t totalSize;
+} otaValidationStatus;
 
-// Stop Motors Helper
+// Motor Control Helpers
 void setMotorSpeeds(int leftSpeed, int rightSpeed) {
-    // Clamp speeds between -255 and 255
     leftSpeed = constrain(leftSpeed, -255, 255);
     rightSpeed = constrain(rightSpeed, -255, 255);
 
@@ -78,23 +75,23 @@ void driveVehicle(int v, int w) {
     digitalWrite(LED_INDICATOR, HIGH);
 }
 
-// BLE Callbacks
-class ServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
+// NimBLE Callbacks
+class ServerCallbacks: public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer) {
         deviceConnected = true;
         lastPacketTime = millis();
-        Serial.println("[BLE] Mobile Phone Connected!");
+        Serial.println("[NimBLE] Mobile Phone Connected!");
     }
-    void onDisconnect(BLEServer* pServer) {
+    void onDisconnect(NimBLEServer* pServer) {
         deviceConnected = false;
         stopVehicle();
-        Serial.println("[BLE] Mobile Phone Disconnected! Motors Stopped.");
-        BLEDevice::startAdvertising();
+        Serial.println("[NimBLE] Mobile Phone Disconnected! Motors Stopped.");
+        NimBLEDevice::startAdvertising();
     }
 };
 
-class CommandCallbacks: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
+class CommandCallbacks: public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic *pCharacteristic) {
         std::string rxValue = pCharacteristic->getValue();
         if (rxValue.length() >= 4 && (uint8_t)rxValue[0] == 0xFF) {
             uint8_t vNorm = (uint8_t)rxValue[1];
@@ -272,38 +269,38 @@ void setup() {
 
     setupWebServer();
 
-    // BLE Service Setup (Supports both Monorepo Protocol & Official vibe-coding.tw Nordic UART Service)
-    BLEDevice::init("ESP32-Car-C3");
-    BLEServer *pServer = BLEDevice::createServer();
+    // NimBLE Service Setup (Supports both Monorepo Protocol & Official vibe-coding.tw Nordic UART Service)
+    NimBLEDevice::init("ESP32-Car-C3");
+    NimBLEServer *pServer = NimBLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
 
     // 1. Monorepo Vehicle Primary Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
-    BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-                                            CHARACTERISTIC_UUID,
-                                            BLECharacteristic::PROPERTY_READ |
-                                            BLECharacteristic::PROPERTY_WRITE |
-                                            BLECharacteristic::PROPERTY_NOTIFY
-                                          );
+    NimBLEService *pService = pServer->createService(SERVICE_UUID);
+    NimBLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                                CHARACTERISTIC_UUID,
+                                                NIMBLE_PROPERTY::READ |
+                                                NIMBLE_PROPERTY::WRITE |
+                                                NIMBLE_PROPERTY::NOTIFY
+                                              );
     pCharacteristic->setCallbacks(new CommandCallbacks());
     pService->start();
 
     // 2. Official vibe-coding.tw Nordic UART Secondary Service (6e400001-b5a3-f393-e0a9-e50e24dcca9e)
-    BLEService *pNordicService = pServer->createService("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
-    BLECharacteristic *pNordicRxChar = pNordicService->createCharacteristic(
-                                            "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
-                                            BLECharacteristic::PROPERTY_WRITE |
-                                            BLECharacteristic::PROPERTY_WRITE_NR
-                                          );
+    NimBLEService *pNordicService = pServer->createService("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+    NimBLECharacteristic *pNordicRxChar = pNordicService->createCharacteristic(
+                                                "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
+                                                NIMBLE_PROPERTY::WRITE |
+                                                NIMBLE_PROPERTY::WRITE_NR
+                                              );
     pNordicRxChar->setCallbacks(new CommandCallbacks());
     pNordicService->start();
 
-    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+    NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->addServiceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
     pAdvertising->setScanResponse(true);
-    BLEDevice::startAdvertising();
-    Serial.println("[BLE] Dual-Service Advertising Started as 'ESP32-Car-C3'");
+    NimBLEDevice::startAdvertising();
+    Serial.println("[NimBLE] Dual-Service Advertising Started as 'ESP32-Car-C3'");
 }
 
 void loop() {
