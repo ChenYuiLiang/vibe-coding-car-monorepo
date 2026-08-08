@@ -2,6 +2,8 @@
 
 本教材指南包含 **Car Basic 基礎系列**（ESP32 嵌入式韌體與網絡通訊）全 30 個單元的核心知識點、PlatformIO C++ 程式碼解析、以及在 ESP32 實體開發板上的燒錄與串口實測 SOP。
 
+> **命名說明：** 下方資料夾後綴 `<github-username>` 代表你的 GitHub 使用者名稱。GitHub Classroom accept 作業後，本機／遠端 repo 會變成 `單元名-你的帳號`（每人不同），不是固定字串。
+
 ---
 
 ## 📚 課程目錄與單元架構
@@ -9,45 +11,45 @@
 ```
 Car Basic 基礎系列 (30 個單元)
 ├── 1. basic-01-master-environment (ESP32 架構與 PlatformIO 環境)
-│   ├── car-basic-platformio-setup-kUUp1Pe8
-│   ├── car-basic-esp32-architecture-kUUp1Pe8
-│   └── car-basic-drivers-ports-kUUp1Pe8
+│   ├── car-basic-platformio-setup-<github-username>
+│   ├── car-basic-esp32-architecture-<github-username>
+│   └── car-basic-drivers-ports-<github-username>
 ├── 2. basic-02-master-ota-architecture (OTA 無線燒錄與 Flash 分區)
-│   ├── car-basic-ota-principles-kUUp1Pe8
-│   ├── car-basic-partition-table-kUUp1Pe8
-│   └── car-basic-ota-security-kUUp1Pe8
+│   ├── car-basic-ota-principles-<github-username>
+│   ├── car-basic-partition-table-<github-username>
+│   └── car-basic-ota-security-<github-username>
 ├── 3. basic-03-master-io-mapping (GPIO / ADC 與按鍵防彈跳)
-│   ├── car-basic-pinout-kUUp1Pe8
-│   ├── car-basic-adc-resolution-kUUp1Pe8
-│   └── car-basic-pullup-debounce-kUUp1Pe8
+│   ├── car-basic-pinout-<github-username>
+│   ├── car-basic-adc-resolution-<github-username>
+│   └── car-basic-pullup-debounce-<github-username>
 ├── 4. basic-04-master-pwm-control (PWM 調變與 H 橋驅動)
-│   ├── car-basic-pwm-basics-kUUp1Pe8
-│   ├── car-basic-ledc-syntax-kUUp1Pe8
-│   └── car-basic-h-bridge-kUUp1Pe8
+│   ├── car-basic-pwm-basics-<github-username>
+│   ├── car-basic-ledc-syntax-<github-username>
+│   └── car-basic-h-bridge-<github-username>
 ├── 5. basic-05-master-ble-gatt (ESP32 BLE GATT 伺服器)
-│   ├── car-basic-advertising-connection-kUUp1Pe8
-│   ├── car-basic-gatt-structure-kUUp1Pe8
-│   └── car-basic-ble-properties-kUUp1Pe8
+│   ├── car-basic-advertising-connection-<github-username>
+│   ├── car-basic-gatt-structure-<github-username>
+│   └── car-basic-ble-properties-<github-username>
 ├── 6. basic-06-master-http-web (HTTP 協定與 API 介面)
-│   ├── car-basic-http-request-kUUp1Pe8
-│   ├── car-basic-fetch-api-kUUp1Pe8
-│   └── car-basic-cors-security-kUUp1Pe8
+│   ├── car-basic-http-request-<github-username>
+│   ├── car-basic-fetch-api-<github-username>
+│   └── car-basic-cors-security-<github-username>
 ├── 7. basic-07-master-wifi-modes (Wi-Fi 模式與非同步 WebServer)
-│   ├── car-basic-wifi-ap-sta-kUUp1Pe8
-│   ├── car-basic-async-webserver-kUUp1Pe8
-│   └── car-basic-http-lifecycle-kUUp1Pe8
+│   ├── car-basic-wifi-ap-sta-<github-username>
+│   ├── car-basic-async-webserver-<github-username>
+│   └── car-basic-http-lifecycle-<github-username>
 ├── 8. basic-08-master-joystick-math (運動學與雙輪差速控制)
-│   ├── car-basic-joystick-mapping-kUUp1Pe8
-│   ├── car-basic-response-curves-kUUp1Pe8
-│   └── car-basic-unicycle-model-kUUp1Pe8
+│   ├── car-basic-joystick-mapping-<github-username>
+│   ├── car-basic-response-curves-<github-username>
+│   └── car-basic-unicycle-model-<github-username>
 ├── 9. basic-09-master-multitasking (多任務與時間管理)
-│   ├── car-basic-hardware-timer-kUUp1Pe8
-│   ├── car-basic-millis-kUUp1Pe8
-│   └── car-basic-sampling-rate-kUUp1Pe8
+│   ├── car-basic-hardware-timer-<github-username>
+│   ├── car-basic-millis-<github-username>
+│   └── car-basic-sampling-rate-<github-username>
 └── 10. basic-10-master-fsm (有限狀態機與系統穩定度)
-    ├── car-basic-fsm-kUUp1Pe8
-    ├── car-basic-state-consistency-kUUp1Pe8
-    └── car-basic-ui-design-kUUp1Pe8
+    ├── car-basic-fsm-<github-username>
+    ├── car-basic-state-consistency-<github-username>
+    └── car-basic-ui-design-<github-username>
 ```
 
 ---
@@ -91,7 +93,7 @@ Car Basic 基礎系列 (30 個單元)
    - 拍照記錄實體板與馬達驅動板接線，存至 `assets/hardware-setup.jpg`。
 2. **PlatformIO 實機燒錄**：
    ```bash
-   cd car-basic-wifi-ap-sta-kUUp1Pe8
+   cd car-basic-wifi-ap-sta-<github-username>
    pio run -t upload
    ```
 3. **串口 Serial Monitor 觀察與驗收**：
