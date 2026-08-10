@@ -250,6 +250,7 @@ void applyCorsHeaders() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Car-Token");
+    server.sendHeader("Access-Control-Allow-Private-Network", "true");
     server.sendHeader("Access-Control-Max-Age", "86400");
 }
 
