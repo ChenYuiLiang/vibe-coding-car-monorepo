@@ -30,8 +30,6 @@
 | S14 | canvas-joystick | https://github.com/vibe-coding-classroom/car-starter-canvas-joystick-kUUp1Pe8 | |
 | S15 | joystick-math | https://github.com/vibe-coding-classroom/car-starter-joystick-math-kUUp1Pe8 | |
 
-> 另有舊副本：https://github.com/vibe-coding-classroom/start-01-unit-html5-basics-ChenYuiLiang — 重測請用上面 S01（`car-starter-html5-basics-kUUp1Pe8`）。
-
 ---
 
 ## Car Basic（30）
