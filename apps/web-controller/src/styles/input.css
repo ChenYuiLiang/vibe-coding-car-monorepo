@@ -3,7 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  html,
   body {
     margin: 0;
+    /* Reduce pinch / double-tap zoom on the control surface (with viewport max-scale). */
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+
+  /* S01 touch-friendly defaults for interactive controls */
+  button,
+  [role='button'],
+  #drivePad {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 }

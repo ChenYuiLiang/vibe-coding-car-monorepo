@@ -40,13 +40,36 @@ git clone https://github.com/ChenYuiLiang/vibe-coding-car-monorepo.git
 cd vibe-coding-car-monorepo
 npm install
 
-# 遙控器
+# 連線入口（開發機上的精簡頁：找車 IP → 跳轉車載遙控）
 npm run dev
-# 瀏覽器開 http://127.0.0.1:5173 （若埠被佔會換號，看終端輸出）
-
-# 單元測試
-npm run test
+# 終端會印 Local / Network 網址；埠預設 5173（被佔會換號）
 ```
+
+### 手機怎麼連到車？（clone 後照做）
+
+**產品遙控頁在車上**，不是一直停在開發機 Vite 頁。
+
+| 角色 | 說明 |
+|------|------|
+| 車載遙控／配網頁 | `http://<車IP>/`（韌體內建）← **日常用這個** |
+| 開發機連線入口 | `npm run dev` 開的頁（例如 `http://<電腦區網IP>:5173/`）← **只負責找車、跳轉、進階 BLE／OTA** |
+
+**IP 怎麼來（重要）**
+
+| 模式 | 何時 | 網址 |
+|------|------|------|
+| SoftAP | 車開熱點 `ESP32-Car-AP` / `vibe123456` | 固定 **http://192.168.4.1** |
+| STA | 車已加入某人家用／教室 Wi‑Fi | **DHCP 分配，每人／每台路由器都不同** |
+
+STA 時查 IP 的方式：
+
+1. 連線入口按 **「自動尋找車輛 IP」**（記憶上次成功 → SoftAP → `esp32-car.local` → 同網段掃描）  
+2. 試 **http://esp32-car.local**（Mac 上常失敗，可改用數字 IP）  
+3. 路由器後台「已連線裝置」  
+4. 暫時連回 SoftAP，在配網頁看狀態／清 WiFi 後重配  
+
+步驟細節：[`apps/web-controller/README.md`](apps/web-controller/README.md)  
+整車聯調：[`curriculum/Integration-Lab.md`](curriculum/Integration-Lab.md)
 
 ### 韌體建置與 OTA（車必須已能開 HTTP）
 
@@ -79,9 +102,10 @@ STA 連上家用 WiFi 後熱點會關閉（正常）。
 
 | 目標 | 路徑 |
 |------|------|
-| 遙控 UI／連線邏輯 | `apps/web-controller/src/` |
+| 車載遙控頁（產品 UI） | `firmware/esp32c3-vehicle/src/main.cpp`（內嵌 HTML） |
+| 連線入口／自動尋車／進階 BLE·OTA | `apps/web-controller/src/` |
 | BLE 封包／OTA 標頭規則 | `packages/protocol/src/index.ts` |
-| 車端 WiFi／BLE／馬達／HTTP | `firmware/esp32c3-vehicle/src/main.cpp` |
+| 車端 WiFi／BLE／馬達／HTTP API | `firmware/esp32c3-vehicle/src/main.cpp` |
 | 課程驗收說明 | `curriculum/Integration-Lab.md` |
 
 改完韌體記得 `pio run` 並更新根目錄 slim bin，再 OTA。

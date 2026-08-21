@@ -12,6 +12,7 @@
 > - OTA：只上傳根目錄 `firmware_esp32c3_vibe_car_slim.bin`；Mac 建議 `OTA_HOST=<STA_IP> npm run ota`
 > - USB 救援：必須含 **`boot_app0 @ 0xe000`**
 > - **完整手冊**：[docs/FIRMWARE-PLAYBOOK.md](../docs/FIRMWARE-PLAYBOOK.md)
+> - **Clone 後手機怎麼連車／找 STA IP**：[apps/web-controller/README.md](../apps/web-controller/README.md)（連線入口）＋ 根目錄 [README.md](../README.md)「手機怎麼連到車」
 
 ---
 

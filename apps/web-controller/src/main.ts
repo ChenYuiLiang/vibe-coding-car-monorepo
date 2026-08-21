@@ -13,6 +13,8 @@ interface UiElements {
   btnConnect: HTMLButtonElement;
   btnWifiConnect: HTMLButtonElement;
   btnDisconnect: HTMLButtonElement;
+  btnOpenCarPage: HTMLButtonElement;
+  btnFindCar: HTMLButtonElement;
   statusDot: HTMLSpanElement;
   statusText: HTMLSpanElement;
   terminal: HTMLDivElement;
@@ -49,6 +51,15 @@ if (!app) {
 
 app.innerHTML = renderDashboard();
 
+// Older iOS Safari: block pinch-zoom gestures on the control page.
+document.addEventListener(
+  'gesturestart',
+  (event) => {
+    event.preventDefault();
+  },
+  { passive: false }
+);
+
 function getElement<TElement extends HTMLElement>(id: string): TElement {
   const element = document.getElementById(id);
   if (!element) {
@@ -61,6 +72,8 @@ const ui: UiElements = {
   btnConnect: getElement<HTMLButtonElement>('btnConnect'),
   btnWifiConnect: getElement<HTMLButtonElement>('btnWifiConnect'),
   btnDisconnect: getElement<HTMLButtonElement>('btnDisconnect'),
+  btnOpenCarPage: getElement<HTMLButtonElement>('btnOpenCarPage'),
+  btnFindCar: getElement<HTMLButtonElement>('btnFindCar'),
   statusDot: getElement<HTMLSpanElement>('statusDot'),
   statusText: getElement<HTMLSpanElement>('statusText'),
   terminal: getElement<HTMLDivElement>('terminal'),
@@ -117,14 +130,14 @@ function updateConnectionState(connected: boolean): void {
   if (currentMode === 'BLE') {
     ui.statusText.textContent = connected ? '已連線就緒 (BLE Online)' : '未連線狀態 (Offline)';
     ui.btnConnect.classList.toggle('hidden', connected);
-    ui.btnWifiConnect.classList.add('hidden');
     ui.btnDisconnect.classList.toggle('hidden', !connected);
   } else {
-    ui.statusText.textContent = wifiConnected ? `📶 WiFi 已連線 (${ui.espIpAddress.value})` : '未連線狀態 (WiFi Offline)';
+    ui.statusText.textContent = wifiConnected ? `車在線 (${ui.espIpAddress.value})` : '未連線狀態 (WiFi Offline)';
     ui.btnConnect.classList.add('hidden');
-    ui.btnWifiConnect.classList.toggle('hidden', wifiConnected);
     ui.btnDisconnect.classList.toggle('hidden', !wifiConnected);
   }
+  // Main "偵測" button stays visible; it is the connection probe entry point.
+  ui.btnWifiConnect.classList.remove('hidden');
 
   Object.values(ui.buttons).forEach((button) => {
     button.disabled = !isOnline;
@@ -149,7 +162,7 @@ ui.tabModeWifi.addEventListener('click', () => {
   ui.wifiConfigPanel.classList.remove('hidden');
   ui.bleConfigPanel.classList.add('hidden');
   updateConnectionState(false);
-  log('已切換至【📶 WiFi HTTP 雙模】控制模式。手機請連至 ESP32-Car-AP WiFi 基地台！');
+  log('已切換至【WiFi 控制模式】（進階本機遙控盤）。日常請優先開啟車載遙控頁。');
 });
 
 const api = createVehicleGraphQLApi({
@@ -193,6 +206,165 @@ async function connectVehicle(): Promise<void> {
   }
 }
 
+const LAST_CAR_HOST_KEY = 'vibe.car.lastHost';
+
+function rememberCarHost(host: string): void {
+  const normalized = host.trim();
+  if (!normalized) {
+    return;
+  }
+  ui.espIpAddress.value = normalized;
+  try {
+    localStorage.setItem(LAST_CAR_HOST_KEY, normalized);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function restoreLastCarHost(): void {
+  try {
+    const saved = localStorage.getItem(LAST_CAR_HOST_KEY);
+    if (saved) {
+      ui.espIpAddress.value = saved;
+      log(`[記憶] 上次成功的車位址：${saved}`);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+async function probeCarHost(host: string): Promise<{ host: string; localIp?: string; fw?: string } | null> {
+  const candidate = host.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+  if (!candidate) {
+    return null;
+  }
+  try {
+    const res = await fetch(`http://${candidate}/api/status`, { signal: AbortSignal.timeout(900) });
+    if (!res.ok) {
+      return null;
+    }
+    const data = (await res.json()) as { localIp?: string; fw?: string; bleName?: string };
+    if (data.bleName && data.bleName !== 'ESP32-Car' && !data.fw) {
+      return null;
+    }
+    return { host: candidate, localIp: data.localIp, fw: data.fw };
+  } catch {
+    return null;
+  }
+}
+
+/** Best-effort LAN IPv4 via WebRTC (for subnet scan). */
+function discoverLanIpv4(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const rtc = window.RTCPeerConnection
+      ? new RTCPeerConnection({ iceServers: [] })
+      : null;
+    if (!rtc) {
+      resolve(null);
+      return;
+    }
+    const finish = (value: string | null): void => {
+      try {
+        rtc.close();
+      } catch {
+        // ignore
+      }
+      resolve(value);
+    };
+    const timer = window.setTimeout(() => finish(null), 1500);
+    rtc.createDataChannel('lan');
+    rtc.onicecandidate = (event) => {
+      const candidate = event.candidate?.candidate;
+      if (!candidate) {
+        return;
+      }
+      const match = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/.exec(candidate);
+      const ip = match?.[1];
+      if (ip && !ip.startsWith('127.') && !ip.startsWith('0.')) {
+        window.clearTimeout(timer);
+        finish(ip);
+      }
+    };
+    void rtc.createOffer().then((offer) => rtc.setLocalDescription(offer)).catch(() => finish(null));
+  });
+}
+
+async function findCarAutomatically(): Promise<void> {
+  ui.btnFindCar.disabled = true;
+  log('[自動尋找] 依序嘗試：記憶位址 → SoftAP → mDNS → 區網掃描…');
+
+  const remembered = (() => {
+    try {
+      return localStorage.getItem(LAST_CAR_HOST_KEY);
+    } catch {
+      return null;
+    }
+  })();
+
+  const quickHosts = [
+    remembered,
+    ui.espIpAddress.value.trim(),
+    '192.168.4.1',
+    'esp32-car.local'
+  ].filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index);
+
+  for (const host of quickHosts) {
+    log(`[自動尋找] 探測 ${host}…`);
+    const hit = await probeCarHost(host);
+    if (hit) {
+      const best = hit.localIp || hit.host;
+      rememberCarHost(best);
+      wifiConnected = true;
+      currentMode = 'WIFI';
+      updateConnectionState(false);
+      log(`[自動尋找] 找到車 fw=${hit.fw ?? '?'} → ${best}`);
+      ui.btnFindCar.disabled = false;
+      return;
+    }
+  }
+
+  const lanIp = await discoverLanIpv4();
+  if (!lanIp) {
+    log('[自動尋找] 無法取得手機／電腦區網 IP，略過掃描。可手動填 STA IP 或連 SoftAP 用 192.168.4.1。', true);
+    ui.btnFindCar.disabled = false;
+    return;
+  }
+
+  const parts = lanIp.split('.');
+  if (parts.length !== 4) {
+    ui.btnFindCar.disabled = false;
+    return;
+  }
+  const prefix = `${parts[0]}.${parts[1]}.${parts[2]}`;
+  log(`[自動尋找] 掃描 ${prefix}.1–254（本機 ${lanIp}）…`);
+
+  const batchSize = 32;
+  for (let start = 1; start <= 254; start += batchSize) {
+    const end = Math.min(254, start + batchSize - 1);
+    const jobs = [];
+    for (let i = start; i <= end; i += 1) {
+      jobs.push(probeCarHost(`${prefix}.${i}`));
+    }
+    const results = await Promise.all(jobs);
+    const hit = results.find((item) => item !== null);
+    if (hit) {
+      const best = hit.localIp || hit.host;
+      rememberCarHost(best);
+      wifiConnected = true;
+      currentMode = 'WIFI';
+      updateConnectionState(false);
+      log(`[自動尋找] 掃到車 fw=${hit.fw ?? '?'} → ${best}`);
+      ui.btnFindCar.disabled = false;
+      return;
+    }
+  }
+
+  wifiConnected = false;
+  updateConnectionState(false);
+  log('[自動尋找] 沒找到。請確認手機與車同一 Wi‑Fi，或先連 ESP32-Car-AP 用 192.168.4.1。', true);
+  ui.btnFindCar.disabled = false;
+}
+
 async function connectWifiVehicle(): Promise<void> {
   const ip = ui.espIpAddress.value.trim();
   const url = `http://${ip}/api/status`;
@@ -203,15 +375,20 @@ async function connectWifiVehicle(): Promise<void> {
     if (res.ok) {
       const data = await res.json();
       wifiConnected = true;
+      currentMode = 'WIFI';
+      const best = typeof data.localIp === 'string' && data.localIp ? data.localIp : ip;
+      rememberCarHost(best);
       updateConnectionState(false);
-      log(`[WiFi Connected] 成功握手 ESP32 WiFi 節點！ Watchdog 超時: ${data.watchdogTimeout}ms`);
+      log(
+        `[車在線] fw=${data.fw ?? '?'} · ${data.wifiRole ?? '?'} · IP ${best} · 可開啟車載遙控頁`
+      );
     } else {
       throw new Error(`HTTP 狀態碼: ${res.status}`);
     }
   } catch (err) {
     wifiConnected = false;
     updateConnectionState(false);
-    log(`[WiFi HTTP Error] 無法連線至 ${url}。請確認已連 ESP32-Car-AP（密碼 vibe123456）或家用 WiFi 的裝置 IP / esp32-car.local。`, true);
+    log(`[WiFi HTTP Error] 無法連線至 ${url}。可改按「自動尋找」，或試 SoftAP 192.168.4.1 / esp32-car.local。`, true);
   }
 }
 
@@ -370,6 +547,16 @@ ui.btnStartOta.addEventListener('click', async () => {
 
 ui.btnConnect.addEventListener('click', connectVehicle);
 ui.btnWifiConnect.addEventListener('click', connectWifiVehicle);
+ui.btnFindCar.addEventListener('click', () => {
+  void findCarAutomatically();
+});
+ui.btnOpenCarPage.addEventListener('click', () => {
+  const ip = ui.espIpAddress.value.trim() || '192.168.4.1';
+  const url = `http://${ip}/`;
+  log(`[Car Page] 開啟車載遙控頁 ${url}`);
+  window.location.href = url;
+});
+restoreLastCarHost();
 ui.btnDisconnect.addEventListener('click', () => {
   if (currentMode === 'BLE') {
     api.execute({ query: graphQLOperations.disconnectVehicle }).catch((error) => {
