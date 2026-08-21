@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.11-landlock"
+#define FW_VERSION                "1.4.0-s03hud"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -583,227 +583,194 @@ String htmlEscape(const String &in) {
 }
 
 void handleRoot() {
+    String bleLabel = deviceConnected ? "Connected" : (bleStarted ? "Advertising" : "Starting");
+    String modeLabel = (wifiRole == WIFI_ROLE_STA)
+        ? ("STA · " + savedSsid + " · " + localIpStr)
+        : (String("AP · ") + AP_SSID);
     String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
     html += "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'>";
     html += "<title>ESP32-C3 Vibe Car</title>";
-    // Layout aligned with curriculum S02: nested Flex D-pad, ≤600px column, speed flex:1
     html += "<style>"
-            "*{box-sizing:border-box;}"
+            "*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}"
             "html,body{margin:0;height:100%;}"
-            "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
-            "padding:max(0.75rem,env(safe-area-inset-top)) max(0.75rem,env(safe-area-inset-right))"
-            " max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left));"
-            "overscroll-behavior:none;}"
-            ".shell{display:flex;flex-direction:row;flex-wrap:wrap;gap:0.85rem;max-width:960px;margin:0 auto;"
-            "min-height:calc(100dvh - 1.5rem);align-items:stretch;}"
-            ".card{background:#1e293b;border-radius:1rem;padding:1rem 1.15rem;}"
-            ".status{flex:1 1 280px;}"
-            ".drive{flex:1 1 320px;display:flex;flex-direction:column;align-items:center;justify-content:center;}"
-            ".config{flex:1 1 100%;}"
-            ".status h2{margin:0 0 .35rem;font-size:1.2rem;}"
-            ".status p{margin:.35rem 0;}"
-            "label{display:block;margin-top:.75rem;font-size:.9rem;color:#cbd5e1;}"
-            "input[type=text],input[type=password],input[type=file]{width:100%;margin:.4rem 0 0;padding:.75rem;"
-            "background:#090d16;border:1px solid #334155;border-radius:.5rem;color:#38bdf8;}"
-            "input[type=submit],button{background:#0284c7;color:#fff;border:none;padding:.75rem 1rem;border-radius:.5rem;"
-            "font-weight:700;cursor:pointer;width:100%;margin-top:.9rem;}"
-            "button.danger{background:#e11d48;}"
-            ".ok{color:#4ade80;}.warn{color:#fbbf24;}.muted{color:#94a3b8;font-size:.85rem;}"
-            ".drive h3,.drive h4{align-self:stretch;margin:.1rem 0 .5rem;font-size:0.95rem;}"
-            ".drive h4{margin-top:1rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-size:.75rem;}"
-            /* S02-1 nested Flexbox D-pad (no absolute/float) */
-            ".d-pad{display:flex;flex-direction:column;align-items:center;gap:1rem;margin:0 auto;width:fit-content;}"
+            "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0b1220;color:#f8fafc;"
+            "overflow:hidden;overscroll-behavior:none;"
+            "padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}"
+            ".vignette{pointer-events:none;position:fixed;inset:0;opacity:0;z-index:40;}"
+            "body.state-warning .vignette{opacity:1;animation:vig 1.2s ease-in-out infinite alternate;"
+            "box-shadow:inset 0 0 80px 24px rgba(239,68,68,.45);}"
+            "@keyframes vig{from{opacity:.55}to{opacity:1}}"
+            "body.state-warning{animation:borderPulse 1.2s ease-in-out infinite alternate;}"
+            "@keyframes borderPulse{from{box-shadow:inset 0 0 0 3px rgba(239,68,68,.35)}"
+            "to{box-shadow:inset 0 0 0 6px rgba(239,68,68,.9)}}"
+            ".alert{position:fixed;left:50%;top:max(3.2rem,calc(env(safe-area-inset-top)+2.6rem));"
+            "transform:translateX(-50%);z-index:50;display:none;padding:.45rem .9rem;border-radius:.5rem;"
+            "background:#e11d48;font-weight:800;font-size:.8rem;}"
+            "body.state-warning .alert{display:block;animation:shake .45s ease-in-out infinite;}"
+            "@keyframes shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 4px))}"
+            "75%{transform:translateX(calc(-50% + 4px))}}"
+            ".hud{position:relative;height:100dvh;display:flex;flex-direction:column;}"
+            ".hud-top{flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-start;"
+            "gap:.5rem;padding:.55rem .7rem 0;z-index:20;}"
+            ".tel{display:flex;flex-direction:column;gap:.2rem;min-width:0;}"
+            ".tel .row{display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:#cbd5e1;}"
+            ".tel .val{color:#38bdf8;font-weight:700;}"
+            ".badge{display:inline-block;padding:.1rem .4rem;border-radius:999px;font-size:.65rem;font-weight:800;}"
+            ".badge.ok{background:#14532d;color:#86efac;}.badge.warn{background:#7f1d1d;color:#fecaca;}"
+            ".testbed{display:flex;flex-direction:column;align-items:center;gap:.3rem;}"
+            ".testbed span{font-size:.58rem;letter-spacing:.08em;color:#64748b;text-transform:uppercase;}"
+            ".testbed .btns{display:flex;gap:.35rem;}"
+            ".testbed button{margin:0;width:auto;padding:.35rem .55rem;font-size:.65rem;background:#334155;"
+            "border:none;border-radius:.4rem;color:#fff;font-weight:700;}"
+            ".stage{flex:1 1 auto;position:relative;min-height:0;}"
+            ".safe{position:absolute;left:50%;top:50%;width:40vw;height:40vh;transform:translate(-50%,-50%);"
+            "border:1px dashed rgba(56,189,248,.35);border-radius:12px;pointer-events:none;z-index:1;}"
+            ".safe span{position:absolute;left:50%;top:.25rem;transform:translateX(-50%);font-size:.55rem;"
+            "color:rgba(148,163,184,.8);letter-spacing:.06em;white-space:nowrap;}"
+            ".tape{position:absolute;top:50%;transform:translateY(-50%);width:3.2rem;padding:.4rem .25rem;"
+            "background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.25);border-radius:.5rem;"
+            "text-align:center;z-index:5;font-size:.65rem;color:#94a3b8;}"
+            ".tape.left{left:max(.4rem,calc(50% - 20vw - 3.6rem));}"
+            ".tape.right{right:max(.4rem,calc(50% - 20vw - 3.6rem));}"
+            ".tape b{display:block;color:#f8fafc;font-size:.95rem;margin-top:.15rem;}"
+            ".thumb{flex:0 0 33dvh;min-height:220px;max-height:42dvh;display:flex;flex-direction:column;"
+            "align-items:center;justify-content:flex-end;gap:.55rem;padding:0 .75rem max(.6rem,env(safe-area-inset-bottom));"
+            "background:linear-gradient(180deg,transparent,rgba(15,23,42,.92) 28%);z-index:15;}"
+            ".d-pad{display:flex;flex-direction:column;align-items:center;gap:1rem;}"
             ".d-pad-row{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:1rem;}"
-            ".d-pad button{margin:0;width:64px;height:64px;min-width:56px;min-height:56px;padding:0;font-size:1.25rem;"
-            "touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}"
+            ".d-pad button,.speed-controls .speed{touch-action:none;-webkit-user-select:none;user-select:none;"
+            "-webkit-touch-callout:none;margin:0;}"
+            ".d-pad button{width:clamp(56px,14vw,72px);height:clamp(56px,14vw,72px);font-size:1.2rem;"
+            "background:#0284c7;border:none;border-radius:.75rem;color:#fff;font-weight:700;}"
             ".d-pad .stop{background:#e11d48;}"
-            /* S02-3 speed group: gap≥1rem + flex:1 */
-            ".speed-controls{display:flex;gap:1rem;width:100%;max-width:300px;margin-top:.25rem;flex-shrink:0;}"
-            ".speed-controls .speed{flex:1;margin-top:0;padding:.7rem .4rem;font-size:.8rem;background:#334155;}"
+            ".speed-controls{display:flex;gap:1rem;width:min(92vw,320px);}"
+            ".speed-controls .speed{flex:1;padding:.65rem .3rem;font-size:.75rem;background:#334155;"
+            "border:none;border-radius:.55rem;color:#fff;font-weight:700;}"
             ".speed-controls .speed.active{background:#38bdf8;color:#0f172a;}"
-            "#drvMsg{margin:.75rem 0 0;text-align:center;}"
-            ".config hr{border:0;border-top:1px solid #334155;margin:1.1rem 0;}"
-            /* S02-2: ≤600px stack portrait */
-            "@media (max-width:600px){"
-            ".shell{flex-direction:column;}"
-            ".status,.drive,.config{flex:1 1 auto;width:100%;}"
-            "}"
-            /* Landscape: lock page scroll; keep pad + ECO/NORM/TURBO visible */
+            "#drvMsg{margin:0;font-size:.72rem;color:#94a3b8;text-align:center;min-height:1em;}"
+            ".config{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:70dvh;overflow:auto;"
+            "background:#1e293b;border-radius:1rem 1rem 0 0;padding:0 1rem 1rem;transform:translateY(calc(100% - 2.4rem));"
+            "transition:transform .2s;}"
+            ".config[open]{transform:translateY(0);}"
+            ".config summary{list-style:none;cursor:pointer;padding:.7rem 0;font-weight:700;text-align:center;color:#94a3b8;}"
+            ".config summary::-webkit-details-marker{display:none;}"
+            "label{display:block;margin-top:.75rem;font-size:.85rem;color:#cbd5e1;}"
+            "input[type=text],input[type=password],input[type=file]{width:100%;margin:.35rem 0 0;padding:.7rem;"
+            "background:#090d16;border:1px solid #334155;border-radius:.5rem;color:#38bdf8;}"
+            "input[type=submit],.config button{background:#0284c7;color:#fff;border:none;padding:.7rem 1rem;"
+            "border-radius:.5rem;font-weight:700;width:100%;margin-top:.75rem;}"
+            ".config button.danger{background:#e11d48;}"
+            ".muted{color:#94a3b8;font-size:.78rem;}"
             "@media (orientation:landscape) and (max-height:500px){"
-            "html,body{overflow:hidden;height:100dvh;touch-action:manipulation;}"
-            ".shell{flex-wrap:nowrap;gap:.5rem;min-height:0;height:calc(100dvh - 1rem);overflow:hidden;}"
-            ".status{flex:0 0 32%;max-width:32%;overflow:auto;max-height:100%;padding:.65rem .75rem;}"
-            ".status h2{font-size:.95rem;}"
-            ".status .muted{display:none;}"
-            ".drive{flex:1 1 68%;min-width:0;max-height:100%;overflow:hidden;padding:.55rem .7rem;"
-            "justify-content:flex-start;}"
-            ".drive h3{margin:0 0 .35rem;font-size:.85rem;}"
-            ".drive h4{margin:.45rem 0 .3rem;}"
-            ".config{display:none;}"
+            ".hud-top{padding:.35rem .5rem 0;}"
+            ".testbed{flex-direction:row;gap:.45rem;align-items:center;}"
+            ".safe{width:34vw;height:48vh;}"
+            ".tape{width:2.6rem;font-size:.58rem;}"
+            ".tape.left{left:max(.25rem,calc(50% - 17vw - 3rem));}"
+            ".tape.right{right:max(.25rem,calc(50% - 17vw - 3rem));}"
+            ".thumb{flex-basis:auto;min-height:0;max-height:none;flex-direction:row;flex-wrap:wrap;"
+            "justify-content:center;align-items:center;gap:.45rem 1rem;padding-bottom:.35rem;}"
             ".d-pad,.d-pad-row{gap:.45rem;}"
-            ".d-pad button{width:44px;height:44px;min-width:44px;min-height:44px;font-size:1rem;}"
-            ".speed-controls{max-width:220px;gap:.5rem;}"
-            ".speed-controls .speed{padding:.45rem .2rem;font-size:.7rem;}"
-            "#drvMsg{margin:.35rem 0 0;font-size:.75rem;}"
+            ".d-pad button{width:44px;height:44px;font-size:1rem;}"
+            ".speed-controls{width:min(46vw,240px);gap:.45rem;}"
+            ".speed-controls .speed{padding:.4rem .2rem;font-size:.65rem;}"
+            ".config{display:none;}"
             "}"
             "</style></head><body>";
-
-    html += "<div class='shell'>";
-    html += "<section class='card status'><h2>ESP32-C3 Vibe Car</h2>";
-    html += "<p class='muted'>Firmware " + String(FW_VERSION) + " · profile " + String(CURRICULUM_PROFILE) + "</p>";
-    html += "<p>BLE: <strong>" + String(deviceConnected ? "Connected" : (bleStarted ? "Advertising" : "Starting")) + "</strong> (" + String(BLE_DEVICE_NAME) + ")</p>";
-    html += "<p>FSM: <strong>" + String(vehicleStateName()) + "</strong></p>";
-
-    if (wifiRole == WIFI_ROLE_STA) {
-        html += "<p class='ok'>Mode: <strong>STA</strong> — connected to '" + htmlEscape(savedSsid) + "' (" + localIpStr + ")</p>";
-        html += "<p class='muted'>AP hotspot is off while STA is healthy. Use Clear WiFi to return to AP.</p>";
-    } else {
-        html += "<p class='warn'>Mode: <strong>AP</strong> — join WiFi <strong>" + String(AP_SSID) + "</strong> / password <strong>" + String(AP_PASS) + "</strong></p>";
-        html += "<p class='muted'>Config page: http://192.168.4.1 &nbsp;|&nbsp; mDNS: http://esp32-car.local</p>";
-    }
-    html += "</section>";
-
-    html += "<section class='card drive'><h3>Drive</h3>";
+    html += "<div class='vignette'></div><div class='alert' id='alertBanner'>WARNING</div>";
+    html += "<div class='hud'><header class='hud-top'>";
+    html += "<div class='tel'><div class='row'>SIG <span class='val'>WiFi</span> "
+            "<span class='badge ok' id='linkBadge'>LINK</span></div>";
+    html += "<div class='row'>MODE <span class='val'>" + htmlEscape(modeLabel) + "</span></div></div>";
+    html += "<div class='testbed'><span>System Testbed</span><div class='btns'>";
+    html += "<button type='button' id='simLowBat'>LOW BAT</button>";
+    html += "<button type='button' id='simOffline'>OFFLINE</button>";
+    html += "<button type='button' id='simClear'>CLEAR</button></div></div>";
+    html += "<div class='tel' style='align-items:flex-end'>";
+    html += "<div class='row'>BLE <span class='val'>" + htmlEscape(bleLabel) + "</span></div>";
+    html += "<div class='row'>FSM <span class='val'>" + String(vehicleStateName()) + "</span></div>";
+    html += "<div class='row muted' style='font-size:.62rem'>" + String(FW_VERSION) + "</div></div></header>";
+    html += "<div class='stage'><div class='safe'><span>40% CORE SAFETY ZONE</span></div>";
+    html += "<div class='tape left'>SPD<b id='spdVal'>0</b></div>";
+    html += "<div class='tape right'>THR<b id='thrVal'>88</b></div></div>";
+    html += "<section class='thumb'>";
     html += "<div class='d-pad' id='drivePad'>";
-    html += "<div class='d-pad-row top'><button type='button' data-cmd='F' id='btnF'>▲</button></div>";
+    html += "<div class='d-pad-row top'><button type='button' data-cmd='F'>▲</button></div>";
     html += "<div class='d-pad-row middle'>";
-    html += "<button type='button' data-cmd='L' id='btnL'>◀</button>";
-    html += "<button class='stop' type='button' data-cmd='S' id='btnS'>■</button>";
-    html += "<button type='button' data-cmd='R' id='btnR'>▶</button>";
-    html += "</div>";
-    html += "<div class='d-pad-row bottom'><button type='button' data-cmd='B' id='btnB'>▼</button></div>";
-    html += "</div>";
-    html += "<h4>Transmission</h4>";
+    html += "<button type='button' data-cmd='L'>◀</button>";
+    html += "<button class='stop' type='button' data-cmd='S'>■</button>";
+    html += "<button type='button' data-cmd='R'>▶</button></div>";
+    html += "<div class='d-pad-row bottom'><button type='button' data-cmd='B'>▼</button></div></div>";
     html += "<div class='speed-controls' id='speedPad'>";
     html += "<button type='button' class='speed' data-speed='70'>ECO</button>";
     html += "<button type='button' class='speed active' data-speed='88'>NORM</button>";
-    html += "<button type='button' class='speed' data-speed='100'>TURBO</button>";
-    html += "</div>";
-    html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ or release to stop.</p>";
-    html += "<script>"
-            "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=88,activeDir=null;"
-            "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}"
-            "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});msg('v='+v+' w='+w+' · spd='+speed);}"
-            "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});msg('STOP · spd='+speed);}"
-            "function hold(v,w){"
-            " holding=true;hv=v;hw=w;sendDrive(v,w);"
-            " if(timer)clearInterval(timer);"
-            " timer=setInterval(function(){if(holding)sendDrive(hv,hw);},220);"
-            "}"
-            "function release(){"
-            " holding=false;activeDir=null;dirTouches={};"
-            " if(timer){clearInterval(timer);timer=null;}"
-            " sendStop();"
-            "}"
-            "function holdDir(cmd){"
-            " activeDir=cmd;"
-            " if(cmd==='F')hold(speed,0);"
-            " else if(cmd==='B')hold(-speed,0);"
-            " else if(cmd==='L')hold(0,-speed);"
-            " else if(cmd==='R')hold(0,speed);"
-            "}"
-            "function setSpeed(n,btn){"
-            " speed=n;"
-            " var nodes=document.querySelectorAll('.speed-controls .speed');"
-            " for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i]===btn);"
-            " if(holding&&activeDir)holdDir(activeDir);"
-            " else msg('spd='+speed);"
-            "}"
-            "function cmdFromEl(el){"
-            " while(el&&el!==document.body){"
-            "  if(el.getAttribute&&el.getAttribute('data-cmd'))return el.getAttribute('data-cmd');"
-            "  el=el.parentElement;"
-            " }"
-            " return null;"
-            "}"
-            "function touchCmd(touch){"
-            " return cmdFromEl(document.elementFromPoint(touch.clientX,touch.clientY));"
-            "}"
-            "function applyCmd(cmd){"
-            " if(!cmd)return;"
-            " if(cmd==='S'){release();return;}"
-            " holdDir(cmd);"
-            "}"
-            "function anyDirTouch(){"
-            " for(var id in dirTouches){if(dirTouches[id]&&dirTouches[id]!=='S')return dirTouches[id];}"
-            " return null;"
-            "}"
-            "function onPadStart(e){"
-            " ignoreMouseUntil=Date.now()+1500;"
-            " e.preventDefault();"
-            " for(var i=0;i<e.changedTouches.length;i++){"
-            "  var t=e.changedTouches[i],c=touchCmd(t);"
-            "  if(!c)continue;"
-            "  dirTouches[t.identifier]=c;"
-            "  applyCmd(c);"
-            " }"
-            "}"
-            "function onPadEnd(e){"
-            " ignoreMouseUntil=Date.now()+1500;"
-            " e.preventDefault();"
-            " for(var i=0;i<e.changedTouches.length;i++){"
-            "  delete dirTouches[e.changedTouches[i].identifier];"
-            " }"
-            " var left=anyDirTouch();"
-            " if(left)applyCmd(left); else release();"
-            "}"
-            "function onPadCancel(e){"
-            " ignoreMouseUntil=Date.now()+1500;"
-            " e.preventDefault();"
-            " for(var i=0;i<e.changedTouches.length;i++){"
-            "  delete dirTouches[e.changedTouches[i].identifier];"
-            " }"
-            " if(!anyDirTouch())release();"
-            "}"
-            "var pad=document.getElementById('drivePad');"
-            "pad.addEventListener('touchstart',onPadStart,{passive:false,capture:true});"
-            "pad.addEventListener('touchend',onPadEnd,{passive:false,capture:true});"
-            "pad.addEventListener('touchcancel',onPadCancel,{passive:false,capture:true});"
-            "pad.addEventListener('mousedown',function(e){"
-            " if(Date.now()<ignoreMouseUntil)return;"
-            " var c=cmdFromEl(e.target);if(!c)return;"
-            " e.preventDefault();mouseOn=true;applyCmd(c);"
-            "});"
-            "window.addEventListener('mouseup',function(){"
-            " if(Date.now()<ignoreMouseUntil)return;"
-            " if(!mouseOn)return;"
-            " mouseOn=false;release();"
-            "});"
-            "document.addEventListener('touchstart',function(e){"
-            " for(var i=0;i<e.changedTouches.length;i++){"
-            "  var t=e.changedTouches[i],c=touchCmd(t);"
-            "  if(c==='S'){dirTouches[t.identifier]='S';release();e.preventDefault();}"
-            " }"
-            "},{passive:false,capture:true});"
-            "document.getElementById('speedPad').addEventListener('click',function(e){"
-            " var b=e.target.closest('.speed');if(!b)return;"
-            " setSpeed(parseInt(b.getAttribute('data-speed'),10),b);"
-            "});"
-            "</script></section>";
-
-    html += "<section class='card config'>";
-    html += "<h3>OTA Update</h3>";
-    html += "<form method='POST' action='/update' enctype='multipart/form-data'>";
+    html += "<button type='button' class='speed' data-speed='100'>TURBO</button></div>";
+    html += "<p id='drvMsg'>Hold direction · ■ stop</p></section></div>";
+    html += "<details class='config' id='configPanel'><summary>OTA · WiFi · Settings</summary>";
+    html += "<h3>OTA Update</h3><form method='POST' action='/update' enctype='multipart/form-data'>";
     html += "<label>Firmware .bin</label><input type='file' name='update' accept='.bin' required>";
-    html += "<input type='submit' value='Upload OTA'>";
-    html += "</form>";
-
-    html += "<hr><h3>WiFi Provisioning</h3>";
+    html += "<input type='submit' value='Upload OTA'></form><h3>WiFi Provisioning</h3>";
     html += "<form method='POST' action='/api/wifi/config'>";
-    html += "<label>Home WiFi SSID</label><input type='text' name='ssid' value='" + htmlEscape(savedSsid) + "' placeholder='e.g. chen' required>";
-    html += "<label>Home WiFi Password</label><input type='password' name='pass' value='" + htmlEscape(savedPass) + "' placeholder='password'>";
-    html += "<input type='submit' value='Save & Switch to STA'>";
-    html += "</form>";
+    html += "<label>Home WiFi SSID</label><input type='text' name='ssid' value='" + htmlEscape(savedSsid) + "' required>";
+    html += "<label>Home WiFi Password</label><input type='password' name='pass' value='" + htmlEscape(savedPass) + "'>";
+    html += "<input type='submit' value='Save & Switch to STA'></form>";
 
     if (savedSsid.length() > 0) {
         html += "<form method='POST' action='/api/wifi/clear'>";
         html += "<button type='submit' class='danger'>Clear WiFi (back to SoftAP " + String(AP_SSID) + ")</button>";
         html += "</form>";
     }
-    html += "<p class='muted'>Factory reset: hold <strong>BOOT</strong> 3s at power-on / 5s while running, or BLE <code>[0xAA,0xF1,0xA5,cs]</code>, or Clear WiFi above. RESET only reboots.</p>";
-    html += "<p class='muted'>Curriculum profile: AP↔STA · BLE 0xFF/0xAA · HTTP /api + /api/v1 · LEDC 20kHz · FSM IDLE/RUNNING/FAULT</p>";
-    html += "</section></div></body></html>";
-
+    html += "<p class='muted'>Factory reset: hold BOOT 3s at power-on / 5s while running.</p></details>";
+    html += "<script>";
+    html += "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=88,activeDir=null;";
+    html += "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}";
+    html += "function setTapes(v,w){var s=document.getElementById('spdVal');var t=document.getElementById('thrVal');";
+    html += "if(s)s.textContent=String(Math.abs(v||0));if(t)t.textContent=String(speed);}";
+    html += "function warn(on,text){document.body.classList.toggle('state-warning',!!on);";
+    html += "var a=document.getElementById('alertBanner');if(a)a.textContent=text||'WARNING';}";
+    html += "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});setTapes(v,w);msg('v='+v+' w='+w+' · spd='+speed);}";
+    html += "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});setTapes(0,0);msg('STOP · spd='+speed);}";
+    html += "function hold(v,w){holding=true;hv=v;hw=w;sendDrive(v,w);if(timer)clearInterval(timer);";
+    html += "timer=setInterval(function(){if(holding)sendDrive(hv,hw);},220);}";
+    html += "function release(){holding=false;activeDir=null;dirTouches={};if(timer){clearInterval(timer);timer=null;}sendStop();}";
+    html += "function holdDir(cmd){activeDir=cmd;if(cmd==='F')hold(speed,0);else if(cmd==='B')hold(-speed,0);";
+    html += "else if(cmd==='L')hold(0,-speed);else if(cmd==='R')hold(0,speed);}";
+    html += "function setSpeed(n,btn){speed=n;var nodes=document.querySelectorAll('.speed-controls .speed');";
+    html += "for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i]===btn);setTapes(hv,hw);";
+    html += "if(holding&&activeDir)holdDir(activeDir);else msg('spd='+speed);}";
+    html += "function cmdFromEl(el){while(el&&el!==document.body){if(el.getAttribute&&el.getAttribute('data-cmd'))";
+    html += "return el.getAttribute('data-cmd');el=el.parentElement;}return null;}";
+    html += "function touchCmd(touch){return cmdFromEl(document.elementFromPoint(touch.clientX,touch.clientY));}";
+    html += "function applyCmd(cmd){if(!cmd)return;if(cmd==='S'){release();return;}holdDir(cmd);}";
+    html += "function anyDirTouch(){for(var id in dirTouches){if(dirTouches[id]&&dirTouches[id]!=='S')return dirTouches[id];}return null;}";
+    html += "function onPadStart(e){ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
+    html += "for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i],c=touchCmd(t);if(!c)continue;";
+    html += "dirTouches[t.identifier]=c;applyCmd(c);}}";
+    html += "function onPadEnd(e){ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
+    html += "for(var i=0;i<e.changedTouches.length;i++)delete dirTouches[e.changedTouches[i].identifier];";
+    html += "var left=anyDirTouch();if(left)applyCmd(left);else release();}";
+    html += "function onPadCancel(e){ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
+    html += "for(var i=0;i<e.changedTouches.length;i++)delete dirTouches[e.changedTouches[i].identifier];";
+    html += "if(!anyDirTouch())release();}";
+    html += "var pad=document.getElementById('drivePad');";
+    html += "pad.addEventListener('touchstart',onPadStart,{passive:false,capture:true});";
+    html += "pad.addEventListener('touchend',onPadEnd,{passive:false,capture:true});";
+    html += "pad.addEventListener('touchcancel',onPadCancel,{passive:false,capture:true});";
+    html += "pad.addEventListener('mousedown',function(e){if(Date.now()<ignoreMouseUntil)return;";
+    html += "var c=cmdFromEl(e.target);if(!c)return;e.preventDefault();mouseOn=true;applyCmd(c);});";
+    html += "window.addEventListener('mouseup',function(){if(Date.now()<ignoreMouseUntil)return;if(!mouseOn)return;mouseOn=false;release();});";
+    html += "document.addEventListener('touchstart',function(e){for(var i=0;i<e.changedTouches.length;i++){";
+    html += "var t=e.changedTouches[i],c=touchCmd(t);if(c==='S'){dirTouches[t.identifier]='S';release();e.preventDefault();}";
+    html += "}},{passive:false,capture:true});";
+    html += "document.getElementById('speedPad').addEventListener('click',function(e){";
+    html += "var b=e.target.closest('.speed');if(!b)return;setSpeed(parseInt(b.getAttribute('data-speed'),10),b);});";
+    html += "document.getElementById('simLowBat').onclick=function(){warn(true,'LOW BAT');};";
+    html += "document.getElementById('simOffline').onclick=function(){warn(true,'OFFLINE');";
+    html += "var b=document.getElementById('linkBadge');if(b){b.textContent='OFFLINE';b.className='badge warn';}};";
+    html += "document.getElementById('simClear').onclick=function(){warn(false);";
+    html += "var b=document.getElementById('linkBadge');if(b){b.textContent='LINK';b.className='badge ok';}};";
+    html += "setTapes(0,0);";
+    html += "</script></body></html>";
     sendText(200, "text/html", html);
 }
 
