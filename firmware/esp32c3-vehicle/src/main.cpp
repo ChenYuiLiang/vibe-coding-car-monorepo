@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.7-rwd"
+#define FW_VERSION                "1.3.8-s02align"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -577,14 +577,19 @@ void handleRoot() {
     String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
     html += "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'>";
     html += "<title>ESP32-C3 Vibe Car</title>";
+    // Layout aligned with curriculum S02: nested Flex D-pad, ≤600px column, speed flex:1
     html += "<style>"
             "*{box-sizing:border-box;}"
             "html,body{margin:0;min-height:100%;}"
             "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
             "padding:max(0.75rem,env(safe-area-inset-top)) max(0.75rem,env(safe-area-inset-right))"
             " max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left));}"
-            ".shell{display:flex;flex-direction:column;gap:0.85rem;max-width:960px;margin:0 auto;min-height:calc(100dvh - 1.5rem);}"
+            ".shell{display:flex;flex-direction:row;flex-wrap:wrap;gap:0.85rem;max-width:960px;margin:0 auto;"
+            "min-height:calc(100dvh - 1.5rem);align-items:stretch;}"
             ".card{background:#1e293b;border-radius:1rem;padding:1rem 1.15rem;}"
+            ".status{flex:1 1 280px;}"
+            ".drive{flex:1 1 320px;display:flex;flex-direction:column;align-items:center;justify-content:center;}"
+            ".config{flex:1 1 100%;}"
             ".status h2{margin:0 0 .35rem;font-size:1.2rem;}"
             ".status p{margin:.35rem 0;}"
             "label{display:block;margin-top:.75rem;font-size:.9rem;color:#cbd5e1;}"
@@ -594,34 +599,33 @@ void handleRoot() {
             "font-weight:700;cursor:pointer;width:100%;margin-top:.9rem;}"
             "button.danger{background:#e11d48;}"
             ".ok{color:#4ade80;}.warn{color:#fbbf24;}.muted{color:#94a3b8;font-size:.85rem;}"
-            ".drive{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1 1 auto;}"
-            ".drive h3{align-self:stretch;margin:.1rem 0 .5rem;}"
-            ".pad{display:grid;grid-template-columns:repeat(3,minmax(56px,1fr));gap:1rem;"
-            "width:min(72vw,280px);margin:0 auto;}"
-            ".pad button{margin:0;min-width:56px;min-height:56px;padding:0;font-size:1.25rem;"
+            ".drive h3,.drive h4{align-self:stretch;margin:.1rem 0 .5rem;font-size:0.95rem;}"
+            ".drive h4{margin-top:1rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-size:.75rem;}"
+            /* S02-1 nested Flexbox D-pad (no absolute/float) */
+            ".d-pad{display:flex;flex-direction:column;align-items:center;gap:1rem;margin:0 auto;width:fit-content;}"
+            ".d-pad-row{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:1rem;}"
+            ".d-pad button{margin:0;width:64px;height:64px;min-width:56px;min-height:56px;padding:0;font-size:1.25rem;"
             "touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}"
-            ".pad .ghost{visibility:hidden;pointer-events:none;}"
-            ".stop{background:#e11d48;}"
+            ".d-pad .stop{background:#e11d48;}"
+            /* S02-3 speed group: gap≥1rem + flex:1 */
+            ".speed-controls{display:flex;gap:1rem;width:100%;max-width:300px;margin-top:.25rem;}"
+            ".speed-controls .speed{flex:1;margin-top:0;padding:.7rem .4rem;font-size:.8rem;background:#334155;}"
+            ".speed-controls .speed.active{background:#38bdf8;color:#0f172a;}"
             "#drvMsg{margin:.75rem 0 0;text-align:center;}"
             ".config hr{border:0;border-top:1px solid #334155;margin:1.1rem 0;}"
-            /* ≥600px or roomy landscape: status | drive side-by-side; config full width */
-            "@media (min-width:600px){"
-            ".shell{flex-direction:row;flex-wrap:wrap;align-items:stretch;}"
-            ".status{flex:1 1 280px;order:1;}"
-            ".drive{flex:1 1 320px;order:2;}"
-            ".config{flex:1 1 100%;order:3;}"
-            ".pad{width:min(42vw,300px);}"
+            /* S02-2: ≤600px stack portrait */
+            "@media (max-width:600px){"
+            ".shell{flex-direction:column;}"
+            ".status,.drive,.config{flex:1 1 auto;width:100%;}"
             "}"
-            /* short landscape phones: keep pad reachable, shrink chrome */
             "@media (orientation:landscape) and (max-height:480px){"
-            ".shell{flex-direction:row;flex-wrap:nowrap;gap:.65rem;min-height:auto;}"
-            ".status{flex:0 1 38%;order:1;overflow:auto;max-height:calc(100dvh - 1.5rem);padding:.75rem;}"
-            ".status h2{font-size:1rem;}"
+            ".shell{flex-wrap:nowrap;}"
+            ".status{flex:0 1 36%;overflow:auto;max-height:calc(100dvh - 1.5rem);}"
             ".status .muted{display:none;}"
-            ".drive{flex:1 1 55%;order:2;padding:.75rem;}"
+            ".drive{flex:1 1 58%;}"
             ".config{display:none;}"
-            ".pad{width:min(46vh,240px);gap:.65rem;}"
-            ".pad button{min-width:48px;min-height:48px;font-size:1.05rem;}"
+            ".d-pad button{width:52px;height:52px;font-size:1.05rem;}"
+            ".d-pad,.d-pad-row{gap:.65rem;}"
             "}"
             "</style></head><body>";
 
@@ -641,36 +645,50 @@ void handleRoot() {
     html += "</section>";
 
     html += "<section class='card drive'><h3>Drive</h3>";
-    html += "<div class='pad' id='drivePad'>";
-    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
-    html += "<button type='button' data-cmd='F' id='btnF'>▲</button>";
-    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
+    html += "<div class='d-pad' id='drivePad'>";
+    html += "<div class='d-pad-row top'><button type='button' data-cmd='F' id='btnF'>▲</button></div>";
+    html += "<div class='d-pad-row middle'>";
     html += "<button type='button' data-cmd='L' id='btnL'>◀</button>";
     html += "<button class='stop' type='button' data-cmd='S' id='btnS'>■</button>";
     html += "<button type='button' data-cmd='R' id='btnR'>▶</button>";
-    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
-    html += "<button type='button' data-cmd='B' id='btnB'>▼</button>";
-    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
+    html += "</div>";
+    html += "<div class='d-pad-row bottom'><button type='button' data-cmd='B' id='btnB'>▼</button></div>";
+    html += "</div>";
+    html += "<h4>Transmission</h4>";
+    html += "<div class='speed-controls' id='speedPad'>";
+    html += "<button type='button' class='speed' data-speed='40'>ECO</button>";
+    html += "<button type='button' class='speed active' data-speed='70'>NORM</button>";
+    html += "<button type='button' class='speed' data-speed='100'>TURBO</button>";
     html += "</div>";
     html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ or release to stop.</p>";
-    // iPhone Safari notes:
-    // - Resolve button via elementFromPoint (2nd finger target is often wrong).
-    // - Do NOT release on synthetic mouseup after touch.
-    // - Drive keep-alive must be fire-and-forget; awaiting fetch + 500ms watchdog caused auto-stop.
     html += "<script>"
-            "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0;"
+            "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=70,activeDir=null;"
             "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}"
-            "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});msg('v='+v+' w='+w);}"
-            "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});msg('STOP');}"
+            "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});msg('v='+v+' w='+w+' · spd='+speed);}"
+            "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});msg('STOP · spd='+speed);}"
             "function hold(v,w){"
             " holding=true;hv=v;hw=w;sendDrive(v,w);"
             " if(timer)clearInterval(timer);"
             " timer=setInterval(function(){if(holding)sendDrive(hv,hw);},220);"
             "}"
             "function release(){"
-            " holding=false;dirTouches={};"
+            " holding=false;activeDir=null;dirTouches={};"
             " if(timer){clearInterval(timer);timer=null;}"
             " sendStop();"
+            "}"
+            "function holdDir(cmd){"
+            " activeDir=cmd;"
+            " if(cmd==='F')hold(speed,0);"
+            " else if(cmd==='B')hold(-speed,0);"
+            " else if(cmd==='L')hold(0,-speed);"
+            " else if(cmd==='R')hold(0,speed);"
+            "}"
+            "function setSpeed(n,btn){"
+            " speed=n;"
+            " var nodes=document.querySelectorAll('.speed-controls .speed');"
+            " for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i]===btn);"
+            " if(holding&&activeDir)holdDir(activeDir);"
+            " else msg('spd='+speed);"
             "}"
             "function cmdFromEl(el){"
             " while(el&&el!==document.body){"
@@ -685,10 +703,7 @@ void handleRoot() {
             "function applyCmd(cmd){"
             " if(!cmd)return;"
             " if(cmd==='S'){release();return;}"
-            " if(cmd==='F')hold(100,0);"
-            " else if(cmd==='B')hold(-100,0);"
-            " else if(cmd==='L')hold(0,-100);"
-            " else if(cmd==='R')hold(0,100);"
+            " holdDir(cmd);"
             "}"
             "function anyDirTouch(){"
             " for(var id in dirTouches){if(dirTouches[id]&&dirTouches[id]!=='S')return dirTouches[id];}"
@@ -741,6 +756,10 @@ void handleRoot() {
             "  if(c==='S'){dirTouches[t.identifier]='S';release();e.preventDefault();}"
             " }"
             "},{passive:false,capture:true});"
+            "document.getElementById('speedPad').addEventListener('click',function(e){"
+            " var b=e.target.closest('.speed');if(!b)return;"
+            " setSpeed(parseInt(b.getAttribute('data-speed'),10),b);"
+            "});"
             "</script></section>";
 
     html += "<section class='card config'>";
