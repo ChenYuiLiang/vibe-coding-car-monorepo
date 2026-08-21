@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.1-recovery"
+#define FW_VERSION                "1.3.2-stopfix"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -593,17 +593,21 @@ void handleRoot() {
     html += "<button type='button' ontouchstart=\"hold(100,0);return false\" onmousedown=\"hold(100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▲</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "<button type='button' ontouchstart=\"hold(0,-100);return false\" onmousedown=\"hold(0,-100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">◀</button>";
-    html += "<button class='stop' type='button' onclick=\"release()\">■</button>";
+    html += "<button class='stop' type='button' ontouchstart=\"release();return false\" onmousedown=\"release();return false\" onclick=\"release();return false\">■</button>";
     html += "<button type='button' ontouchstart=\"hold(0,100);return false\" onmousedown=\"hold(0,100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▶</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "<button type='button' ontouchstart=\"hold(-100,0);return false\" onmousedown=\"hold(-100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▼</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "</div>";
-    html += "<p class='muted' id='drvMsg'>Hold a direction to drive.</p>";
-    html += "<script>var t=null;function go(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});"
+    html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ for immediate stop.</p>";
+    html += "<script>var t=null,gen=0;"
+            "function go(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});"
             "var m=document.getElementById('drvMsg');if(m)m.textContent='v='+v+' w='+w;}"
-            "function hold(v,w){go(v,w);if(t)clearInterval(t);t=setInterval(function(){go(v,w);},200);}"
-            "function release(){if(t){clearInterval(t);t=null;}go(0,0);}</script>";
+            "function stopNow(){fetch('/api/drive?cmd=S').catch(function(){});"
+            "var m=document.getElementById('drvMsg');if(m)m.textContent='STOP';}"
+            "function hold(v,w){var g=++gen;function tick(){if(g!==gen)return;go(v,w);}"
+            "tick();if(t)clearInterval(t);t=setInterval(tick,200);}"
+            "function release(){gen++;if(t){clearInterval(t);t=null;}stopNow();stopNow();}</script>";
 
     html += "<hr style='border:0;border-top:1px solid #334155;margin:1.25rem 0;'>";
     html += "<h3>OTA Update</h3>";
@@ -692,8 +696,16 @@ void handleDriveRequest() {
     } else {
         int v = server.hasArg("v") ? server.arg("v").toInt() : 0;
         int w = server.hasArg("w") ? server.arg("w").toInt() : 0;
-        if (v == 0 && w == 0 && server.hasArg("command")) {
-            applyDriveCommandLetter(server.arg("command").charAt(0));
+        if (v == 0 && w == 0) {
+            // Explicit stop (UI release / ■). Prefer stopVehicle over driveVehicle(0,0)
+            // so FSM returns IDLE and LED clears instead of staying RUNNING.
+            if (server.hasArg("command") && server.arg("command").length() > 0) {
+                applyDriveCommandLetter(server.arg("command").charAt(0));
+            } else {
+                stopVehicle();
+                lastPacketTime = millis();
+                emergencyStopTriggered = false;
+            }
         } else {
             driveVehicle(v, w);
         }
