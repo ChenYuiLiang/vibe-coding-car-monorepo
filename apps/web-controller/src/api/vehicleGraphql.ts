@@ -11,6 +11,10 @@ function encodeDrivePacket(v: number, w: number): Uint8Array {
 export interface VehicleStatus {
   connected: boolean;
   deviceName: string | null;
+  /** Actual GATT service UUID in use (may differ from the form request after fallback). */
+  serviceUuid: string | null;
+  /** Actual writable characteristic UUID in use. */
+  characteristicUuid: string | null;
 }
 
 export interface CommandResult {
@@ -40,7 +44,13 @@ export interface GraphQLRequest<TVariables = Record<string, unknown>> {
 }
 
 export interface BluetoothCharacteristic {
+  uuid?: string;
+  properties?: {
+    write?: boolean;
+    writeWithoutResponse?: boolean;
+  };
   writeValue(data: BufferSource): Promise<void>;
+  writeValueWithoutResponse?(data: BufferSource): Promise<void>;
 }
 
 export interface BluetoothService {
@@ -98,6 +108,8 @@ export const graphQLSchema = `
   type VehicleStatus {
     connected: Boolean!
     deviceName: String
+    serviceUuid: String
+    characteristicUuid: String
   }
 
   type CommandResult {
@@ -123,6 +135,8 @@ export const graphQLOperations = {
       vehicleStatus {
         connected
         deviceName
+        serviceUuid
+        characteristicUuid
       }
     }
   `,
@@ -131,6 +145,8 @@ export const graphQLOperations = {
       connectVehicle(serviceUuid: $serviceUuid, characteristicUuid: $characteristicUuid, scanAllDevices: $scanAllDevices) {
         connected
         deviceName
+        serviceUuid
+        characteristicUuid
       }
     }
   `,
@@ -138,6 +154,9 @@ export const graphQLOperations = {
     mutation DisconnectVehicle {
       disconnectVehicle {
         connected
+        deviceName
+        serviceUuid
+        characteristicUuid
       }
     }
   `,
@@ -152,9 +171,15 @@ export const graphQLOperations = {
   `
 } as const;
 
+/** Canonical monorepo / Integration Lab GATT profile. */
+export const CANONICAL_BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+export const CANONICAL_BLE_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
 interface VehicleState {
   device: BluetoothDevice | null;
   characteristic: BluetoothCharacteristic | null;
+  serviceUuid: string | null;
+  characteristicUuid: string | null;
 }
 
 function getOperationName(query: string): string | null {
@@ -168,15 +193,45 @@ function normalizeUuid(uuid: string): string {
 export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): VehicleGraphQLApi {
   const state: VehicleState = {
     device: null,
-    characteristic: null
+    characteristic: null,
+    serviceUuid: null,
+    characteristicUuid: null
   };
 
   const log = dependencies.onLog ?? (() => undefined);
   const setConnected = (connected: boolean): void => dependencies.onConnectionChange?.(connected);
 
+  /** Serialize GATT writes — Chrome throws if two writeValue overlap. */
+  let writeChain: Promise<void> = Promise.resolve();
+
+  const writePacket = (packet: Uint8Array): Promise<void> => {
+    const characteristic = state.characteristic;
+    if (!characteristic) {
+      return Promise.reject(new Error('尚未連線到可寫入的藍牙特徵。'));
+    }
+
+    writeChain = writeChain
+      .catch(() => undefined)
+      .then(async () => {
+        const canWriteNr = Boolean(
+          characteristic.writeValueWithoutResponse &&
+            characteristic.properties?.writeWithoutResponse
+        );
+        if (canWriteNr && characteristic.writeValueWithoutResponse) {
+          await characteristic.writeValueWithoutResponse(packet as BufferSource);
+          return;
+        }
+        await characteristic.writeValue(packet as BufferSource);
+      });
+
+    return writeChain;
+  };
+
   const getStatus = (): VehicleStatus => ({
     connected: Boolean(state.characteristic && state.device?.gatt?.connected),
-    deviceName: state.device?.name ?? null
+    deviceName: state.device?.name ?? null,
+    serviceUuid: state.serviceUuid,
+    characteristicUuid: state.characteristicUuid
   });
 
   const connectVehicle = async (variables: ConnectVehicleVariables): Promise<VehicleStatus> => {
@@ -208,6 +263,8 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
 
     device.addEventListener('gattserverdisconnected', () => {
       state.characteristic = null;
+      state.serviceUuid = null;
+      state.characteristicUuid = null;
       log('藍牙連線遺失。', true);
       setConnected(false);
     });
@@ -259,14 +316,20 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
 
     // Attempt characteristic discovery
     let characteristic: BluetoothCharacteristic | null = null;
+    let usedCharacteristicUuid = characteristicUuid;
     try {
       characteristic = await service.getCharacteristic(characteristicUuid);
     } catch {
       log(`指定特徵 UUID (${characteristicUuid}) 未找到，嘗試讀取服務預設寫入特徵...`, true);
-      const fallbackCharUuids = ['beb5483e-36e1-4688-b7f5-ea07361b26a8', '0000ffe1-0000-1000-8000-00805f9b34fb', '6e400002-b5a3-f393-e0a9-e50e24dcca9e'];
+      const fallbackCharUuids = [
+        CANONICAL_BLE_CHARACTERISTIC_UUID,
+        '0000ffe1-0000-1000-8000-00805f9b34fb',
+        '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
+      ];
       for (const charUuid of fallbackCharUuids) {
         try {
           characteristic = await service.getCharacteristic(charUuid);
+          usedCharacteristicUuid = charUuid;
           log(`成功連線至特徵: ${charUuid}`);
           break;
         } catch {
@@ -279,8 +342,26 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
       throw new Error(`找不到可寫入的藍牙特徵。`);
     }
 
+    usedCharacteristicUuid = normalizeUuid(characteristic.uuid ?? usedCharacteristicUuid);
+    usedServiceUuid = normalizeUuid(service.uuid ?? usedServiceUuid);
+
     state.device = device;
     state.characteristic = characteristic;
+    state.serviceUuid = usedServiceUuid;
+    state.characteristicUuid = usedCharacteristicUuid;
+    writeChain = Promise.resolve();
+    log(
+      `[BLE] 實際通道 service=${usedServiceUuid} · char=${usedCharacteristicUuid} · write=${Boolean(characteristic.properties?.write)} · writeWithoutResponse=${Boolean(characteristic.properties?.writeWithoutResponse)}`
+    );
+    if (
+      usedServiceUuid !== CANONICAL_BLE_SERVICE_UUID ||
+      usedCharacteristicUuid !== CANONICAL_BLE_CHARACTERISTIC_UUID
+    ) {
+      log(
+        `[BLE] 警告：非正式 monorepo UUID（正式為 ${CANONICAL_BLE_SERVICE_UUID} / ${CANONICAL_BLE_CHARACTERISTIC_UUID}）。畫面已改顯示實際通道；馬達協定可能不相容。`,
+        true
+      );
+    }
     setConnected(true);
     return getStatus();
   };
@@ -289,6 +370,8 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     log('GraphQL Mutation: disconnectVehicle');
     state.device?.gatt?.disconnect();
     state.characteristic = null;
+    state.serviceUuid = null;
+    state.characteristicUuid = null;
     setConnected(false);
     return getStatus();
   };
@@ -307,7 +390,7 @@ export function createVehicleGraphQLApi(dependencies: VehicleApiDependencies): V
     else { v = 0; w = 0; } // 'S' stop
 
     const packet = encodeDrivePacket(v, w);
-    await state.characteristic.writeValue(packet as BufferSource);
+    await writePacket(packet);
     log(`GraphQL Mutation: sendVehicleCommand(command: ${variables.command}, label: "${variables.label}") → [${Array.from(packet).map((b) => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
     return {
       command: variables.command,

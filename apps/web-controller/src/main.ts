@@ -1,6 +1,12 @@
 import './styles/input.css';
 import { validateFirmwareBinary, type FirmwareValidationResult } from '@vibe-coding/protocol';
-import { createVehicleGraphQLApi, graphQLOperations, type VehicleCommand } from './api/vehicleGraphql';
+import {
+  CANONICAL_BLE_CHARACTERISTIC_UUID,
+  CANONICAL_BLE_SERVICE_UUID,
+  createVehicleGraphQLApi,
+  graphQLOperations,
+  type VehicleCommand
+} from './api/vehicleGraphql';
 import { renderDashboard } from './components/layout';
 
 interface UiElements {
@@ -28,6 +34,7 @@ interface UiElements {
   bleConfigPanel: HTMLDivElement;
   wifiConfigPanel: HTMLDivElement;
   buttons: Record<'w' | 'a' | 's' | 'd' | 'space', HTMLButtonElement>;
+  drivePad: HTMLElement;
 }
 
 type NavigatorWithBluetooth = Navigator & {
@@ -80,7 +87,8 @@ const ui: UiElements = {
     s: getElement<HTMLButtonElement>('btnS'),
     d: getElement<HTMLButtonElement>('btnD'),
     space: getElement<HTMLButtonElement>('btnSpace')
-  }
+  },
+  drivePad: getElement<HTMLElement>('drivePad')
 };
 
 let currentSelectedFirmwareBuffer: Uint8Array | null = null;
@@ -152,15 +160,34 @@ const api = createVehicleGraphQLApi({
 
 async function connectVehicle(): Promise<void> {
   try {
-    await api.execute({
+    const response = await api.execute<{
+      connectVehicle: {
+        connected: boolean;
+        deviceName: string | null;
+        serviceUuid: string | null;
+        characteristicUuid: string | null;
+      };
+    }>({
       query: graphQLOperations.connectVehicle,
       variables: {
-        serviceUuid: ui.uuidService.value,
-        characteristicUuid: ui.uuidChar.value,
+        serviceUuid: ui.uuidService.value.trim() || CANONICAL_BLE_SERVICE_UUID,
+        characteristicUuid: ui.uuidChar.value.trim() || CANONICAL_BLE_CHARACTERISTIC_UUID,
         scanAllDevices: ui.chkScanAll.checked
       }
     });
+
+    const status = response.data.connectVehicle;
+    if (status.serviceUuid) {
+      ui.uuidService.value = status.serviceUuid;
+    }
+    if (status.characteristicUuid) {
+      ui.uuidChar.value = status.characteristicUuid;
+    }
+
     log('連線成功！已成功握手 ESP32 藍牙通道， Watchdog 安全超時監控運作中。');
+    log(`[BLE UI] 畫面 UUID 已同步為實際通道：${status.serviceUuid ?? '—'} / ${status.characteristicUuid ?? '—'}`);
+    ui.drivePad.focus();
+    log('鍵盤焦點已移到遙控盤：請切成英文輸入法後按住 WASD。');
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), true);
   }
@@ -217,6 +244,32 @@ async function sendCommand(command: VehicleCommand, label: string): Promise<void
     } catch (err) {
       log(`[WiFi HTTP Drive Error] ${err}`, true);
     }
+  }
+}
+
+/** Hold a direction: keep refreshing packets so firmware watchdog (500ms) does not FAULT-stop. */
+let holdTimer: ReturnType<typeof setInterval> | null = null;
+let holdCommand: VehicleCommand | null = null;
+
+function startHold(command: VehicleCommand, label: string): void {
+  stopHold(false);
+  holdCommand = command;
+  void sendCommand(command, label);
+  holdTimer = setInterval(() => {
+    if (holdCommand) {
+      void sendCommand(holdCommand, label);
+    }
+  }, 200);
+}
+
+function stopHold(sendStop = true): void {
+  if (holdTimer) {
+    clearInterval(holdTimer);
+    holdTimer = null;
+  }
+  holdCommand = null;
+  if (sendStop) {
+    void sendCommand('S', '鬆開急停');
   }
 }
 
@@ -322,6 +375,10 @@ ui.btnDisconnect.addEventListener('click', () => {
     api.execute({ query: graphQLOperations.disconnectVehicle }).catch((error) => {
       log(error instanceof Error ? error.message : String(error), true);
     });
+    // Restore curriculum GATT defaults after disconnect.
+    ui.uuidService.value = CANONICAL_BLE_SERVICE_UUID;
+    ui.uuidChar.value = CANONICAL_BLE_CHARACTERISTIC_UUID;
+    log('已斷開 BLE；UUID 已還原為課程韌體預設通道。');
   } else {
     wifiConnected = false;
     updateConnectionState(false);
@@ -329,48 +386,102 @@ ui.btnDisconnect.addEventListener('click', () => {
   }
 });
 
-// Touch and Button Event Listeners
-ui.buttons.w.addEventListener('mousedown', () => sendCommand('F', '前進'));
-ui.buttons.s.addEventListener('mousedown', () => sendCommand('B', '後退'));
-ui.buttons.a.addEventListener('mousedown', () => sendCommand('L', '左轉'));
-ui.buttons.d.addEventListener('mousedown', () => sendCommand('R', '右轉'));
-ui.buttons.space.addEventListener('mousedown', () => sendCommand('S', '煞車'));
+// Pointer capture hold — do NOT use mouseleave (it fires on tiny cursor jitter and floods STOP).
+function bindHoldButton(
+  button: HTMLButtonElement,
+  command: VehicleCommand,
+  label: string
+): void {
+  button.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    button.setPointerCapture(event.pointerId);
+    startHold(command, label);
+  });
+  button.addEventListener('pointerup', (event) => {
+    if (button.hasPointerCapture(event.pointerId)) {
+      button.releasePointerCapture(event.pointerId);
+    }
+    stopHold(true);
+  });
+  button.addEventListener('pointercancel', () => {
+    stopHold(true);
+  });
+  button.addEventListener('lostpointercapture', () => {
+    stopHold(true);
+  });
+}
 
-const releaseStop = () => { void sendCommand('S', '鬆開急停'); };
-ui.buttons.w.addEventListener('mouseup', releaseStop);
-ui.buttons.s.addEventListener('mouseup', releaseStop);
-ui.buttons.a.addEventListener('mouseup', releaseStop);
-ui.buttons.d.addEventListener('mouseup', releaseStop);
-ui.buttons.w.addEventListener('mouseleave', releaseStop);
-ui.buttons.s.addEventListener('mouseleave', releaseStop);
-ui.buttons.a.addEventListener('mouseleave', releaseStop);
-ui.buttons.d.addEventListener('mouseleave', releaseStop);
+bindHoldButton(ui.buttons.w, 'F', '前進');
+bindHoldButton(ui.buttons.s, 'B', '後退');
+bindHoldButton(ui.buttons.a, 'L', '左轉');
+bindHoldButton(ui.buttons.d, 'R', '右轉');
 
-ui.buttons.w.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('F', '前進'); });
-ui.buttons.s.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('B', '後退'); });
-ui.buttons.a.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('L', '左轉'); });
-ui.buttons.d.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('R', '右轉'); });
-ui.buttons.space.addEventListener('touchstart', (e) => { e.preventDefault(); sendCommand('S', '煞車'); });
-ui.buttons.w.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
-ui.buttons.s.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
-ui.buttons.a.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
-ui.buttons.d.addEventListener('touchend', (e) => { e.preventDefault(); releaseStop(); });
+ui.buttons.space.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) {
+    return;
+  }
+  event.preventDefault();
+  stopHold(false);
+  void sendCommand('S', '煞車');
+});
 
 document.addEventListener('keydown', (event) => {
-  const isOnline = currentMode === 'BLE' ? api.getStatus().connected : wifiConnected;
-  if (!isOnline || event.repeat) {
+  const target = event.target as HTMLElement | null;
+  const tag = target?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) {
+    return;
+  }
+  if (event.isComposing) {
     return;
   }
 
-  const key = event.key.toUpperCase();
-  if (key === 'W') void sendCommand('F', '前進');
-  if (key === 'S') void sendCommand('B', '後退');
-  if (key === 'A') void sendCommand('L', '左轉');
-  if (key === 'D') void sendCommand('R', '右轉');
-  if (key === ' ' || key === 'SPACE') {
+  const isOnline = currentMode === 'BLE' ? api.getStatus().connected : wifiConnected;
+  if (!isOnline) {
+    return;
+  }
+  if (event.repeat) {
+    return;
+  }
+
+  // Use physical key codes so Chinese IME does not swallow WASD.
+  if (event.code === 'KeyW') {
     event.preventDefault();
+    startHold('F', '前進');
+  } else if (event.code === 'KeyS') {
+    event.preventDefault();
+    startHold('B', '後退');
+  } else if (event.code === 'KeyA') {
+    event.preventDefault();
+    startHold('L', '左轉');
+  } else if (event.code === 'KeyD') {
+    event.preventDefault();
+    startHold('R', '右轉');
+  } else if (event.code === 'Space') {
+    event.preventDefault();
+    stopHold(false);
     void sendCommand('S', '煞車');
   }
+});
+
+document.addEventListener('keyup', (event) => {
+  if (event.isComposing) {
+    return;
+  }
+  if (
+    event.code === 'KeyW' ||
+    event.code === 'KeyS' ||
+    event.code === 'KeyA' ||
+    event.code === 'KeyD'
+  ) {
+    stopHold(true);
+  }
+});
+
+ui.drivePad.addEventListener('click', () => {
+  ui.drivePad.focus();
 });
 
 if (!(navigator as NavigatorWithBluetooth).bluetooth) {

@@ -25,10 +25,12 @@ function createMockBluetooth(): MockBluetooth {
   const disconnect = jest.fn<void, []>();
 
   const characteristic: BluetoothCharacteristic = {
+    uuid: '0000ffe1-0000-1000-8000-00805f9b34fb',
     writeValue
   };
 
   const service: BluetoothService = {
+    uuid: '0000ffe0-0000-1000-8000-00805f9b34fb',
     getCharacteristic: jest.fn().mockResolvedValue(characteristic)
   };
 
@@ -70,7 +72,9 @@ describe('vehicle GraphQL API', () => {
 
     expect(response.data.vehicleStatus).toEqual({
       connected: false,
-      deviceName: null
+      deviceName: null,
+      serviceUuid: null,
+      characteristicUuid: null
     });
   });
 
@@ -102,7 +106,9 @@ describe('vehicle GraphQL API', () => {
     });
     expect(response.data.connectVehicle).toEqual({
       connected: true,
-      deviceName: 'Demo Car'
+      deviceName: 'Demo Car',
+      serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb',
+      characteristicUuid: '0000ffe1-0000-1000-8000-00805f9b34fb'
     });
     expect(onConnectionChange).toHaveBeenCalledWith(true);
     expect(onLog).toHaveBeenCalledWith('GraphQL Mutation: connectVehicle(serviceUuid, characteristicUuid)');
@@ -217,6 +223,66 @@ describe('vehicle GraphQL API', () => {
       sent: true
     });
     expect(mock.writeValue).toHaveBeenCalledWith(Uint8Array.from([0xff, 228, 128, (228 + 128) & 0xff]));
+  });
+
+  it('encodes B/L/R/S drive packets and prefers writeWithoutResponse when available', async () => {
+    const mock = createMockBluetooth();
+    const writeWithoutResponse = jest.fn<Promise<void>, [BufferSource]>().mockResolvedValue(undefined);
+    mock.characteristic.writeValueWithoutResponse = writeWithoutResponse;
+    mock.characteristic.properties = { write: true, writeWithoutResponse: true };
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    await api.execute({
+      query: graphQLOperations.connectVehicle,
+      variables: {
+        serviceUuid: 'service-id',
+        characteristicUuid: 'characteristic-id'
+      }
+    });
+
+    for (const [command, packet] of [
+      ['B', Uint8Array.from([0xff, 28, 128, (28 + 128) & 0xff])],
+      ['L', Uint8Array.from([0xff, 128, 28, (128 + 28) & 0xff])],
+      ['R', Uint8Array.from([0xff, 128, 228, (128 + 228) & 0xff])],
+      ['S', Uint8Array.from([0xff, 128, 128, (128 + 128) & 0xff])]
+    ] as const) {
+      await api.execute({
+        query: graphQLOperations.sendVehicleCommand,
+        variables: { command, label: command }
+      });
+      expect(writeWithoutResponse).toHaveBeenLastCalledWith(packet);
+    }
+    expect(mock.writeValue).not.toHaveBeenCalled();
+  });
+
+  it('serializes GATT writes and recovers after a failed write', async () => {
+    const mock = createMockBluetooth();
+    mock.writeValue
+      .mockRejectedValueOnce(new Error('busy'))
+      .mockResolvedValue(undefined);
+
+    const api = createVehicleGraphQLApi({ bluetooth: mock.bluetooth });
+    await api.execute({
+      query: graphQLOperations.connectVehicle,
+      variables: {
+        serviceUuid: 'service-id',
+        characteristicUuid: 'characteristic-id'
+      }
+    });
+
+    await expect(
+      api.execute({
+        query: graphQLOperations.sendVehicleCommand,
+        variables: { command: 'F', label: '前進' }
+      })
+    ).rejects.toThrow('busy');
+
+    await api.execute({
+      query: graphQLOperations.sendVehicleCommand,
+      variables: { command: 'S', label: '煞車' }
+    });
+
+    expect(mock.writeValue).toHaveBeenCalledTimes(2);
   });
 
   it('disconnects and reports offline status', async () => {

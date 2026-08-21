@@ -114,7 +114,11 @@ export function renderDashboard(): string {
           </section>
 
           <!-- Column 2: Mobile Touch Steering D-Pad (4 cols) -->
-          <section class="flex flex-col items-center justify-between rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur md:col-span-4">
+          <section
+            id="drivePad"
+            tabindex="0"
+            class="flex flex-col items-center justify-between rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur outline-none focus:border-sky-400/60 md:col-span-4"
+          >
             <h2 class="w-full border-b border-white/10 pb-3 text-center text-base font-bold text-slate-100">手機觸控遙控盤</h2>
             
             <div class="my-6 flex flex-col items-center gap-3">
@@ -128,7 +132,7 @@ export function renderDashboard(): string {
             </div>
 
             <div class="w-full text-center text-xs text-slate-400">
-              支援實體鍵盤 <kbd class="rounded bg-slate-800 px-1 py-0.5 font-mono">WASD</kbd> 操作，<kbd class="rounded bg-slate-800 px-1 py-0.5 font-mono">SPACE</kbd> 為煞車
+              先點一下此遙控盤再按 <kbd class="rounded bg-slate-800 px-1 py-0.5 font-mono">WASD</kbd>（中文輸入法請先切英文），<kbd class="rounded bg-slate-800 px-1 py-0.5 font-mono">SPACE</kbd> 煞車
             </div>
           </section>
 
