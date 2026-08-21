@@ -16,19 +16,19 @@
 |--|--|--|--|
 | S01 | html5-basics | https://github.com/vibe-coding-classroom/car-starter-html5-basics-kUUp1Pe8 | PASS |
 | S02 | flexbox-layout | https://github.com/vibe-coding-classroom/car-starter-flexbox-layout-kUUp1Pe8 | PASS |
-| S03 | ui-ux-standards | https://github.com/vibe-coding-classroom/car-starter-ui-ux-standards-kUUp1Pe8 | |
-| S04 | ble-async | https://github.com/vibe-coding-classroom/car-starter-ble-async-kUUp1Pe8 | |
-| S05 | ble-security | https://github.com/vibe-coding-classroom/car-starter-ble-security-kUUp1Pe8 | |
-| S06 | typed-arrays | https://github.com/vibe-coding-classroom/car-starter-typed-arrays-kUUp1Pe8 | |
-| S07 | control-panel | https://github.com/vibe-coding-classroom/car-starter-control-panel-kUUp1Pe8 | |
-| S08 | data-json | https://github.com/vibe-coding-classroom/car-starter-data-json-kUUp1Pe8 | |
-| S09 | flow-logic | https://github.com/vibe-coding-classroom/car-starter-flow-logic-kUUp1Pe8 | |
-| S10 | touch-basics | https://github.com/vibe-coding-classroom/car-starter-touch-basics-kUUp1Pe8 | |
-| S11 | touch-vs-mouse | https://github.com/vibe-coding-classroom/car-starter-touch-vs-mouse-kUUp1Pe8 | |
-| S12 | prevent-default | https://github.com/vibe-coding-classroom/car-starter-prevent-default-kUUp1Pe8 | |
-| S13 | long-press | https://github.com/vibe-coding-classroom/car-starter-long-press-kUUp1Pe8 | |
-| S14 | canvas-joystick | https://github.com/vibe-coding-classroom/car-starter-canvas-joystick-kUUp1Pe8 | |
-| S15 | joystick-math | https://github.com/vibe-coding-classroom/car-starter-joystick-math-kUUp1Pe8 | |
+| S03 | ui-ux-standards | https://github.com/vibe-coding-classroom/car-starter-ui-ux-standards-kUUp1Pe8 | PASS |
+| S04 | ble-async | https://github.com/vibe-coding-classroom/car-starter-ble-async-kUUp1Pe8 | PASS |
+| S05 | ble-security | https://github.com/vibe-coding-classroom/car-starter-ble-security-kUUp1Pe8 | PASS |
+| S06 | typed-arrays | https://github.com/vibe-coding-classroom/car-starter-typed-arrays-kUUp1Pe8 | PASS |
+| S07 | control-panel | https://github.com/vibe-coding-classroom/car-starter-control-panel-kUUp1Pe8 | PASS |
+| S08 | data-json | https://github.com/vibe-coding-classroom/car-starter-data-json-kUUp1Pe8 | PASS |
+| S09 | flow-logic | https://github.com/vibe-coding-classroom/car-starter-flow-logic-kUUp1Pe8 | PASS |
+| S10 | touch-basics | https://github.com/vibe-coding-classroom/car-starter-touch-basics-kUUp1Pe8 | PASS |
+| S11 | touch-vs-mouse | https://github.com/vibe-coding-classroom/car-starter-touch-vs-mouse-kUUp1Pe8 | PASS |
+| S12 | prevent-default | https://github.com/vibe-coding-classroom/car-starter-prevent-default-kUUp1Pe8 | PASS |
+| S13 | long-press | https://github.com/vibe-coding-classroom/car-starter-long-press-kUUp1Pe8 | PASS |
+| S14 | canvas-joystick | https://github.com/vibe-coding-classroom/car-starter-canvas-joystick-kUUp1Pe8 | PASS |
+| S15 | joystick-math | https://github.com/vibe-coding-classroom/car-starter-joystick-math-kUUp1Pe8 | PASS |
 
 ---
 
