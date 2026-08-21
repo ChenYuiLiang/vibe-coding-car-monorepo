@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.4-stopq"
+#define FW_VERSION                "1.3.5-iosstop"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -584,8 +584,8 @@ void handleRoot() {
     html += "input[type=submit],button{background:#0284c7;color:#fff;border:none;padding:.75rem 1rem;border-radius:.5rem;font-weight:700;cursor:pointer;width:100%;margin-top:.9rem;}";
     html += "button.danger{background:#e11d48;} .ok{color:#4ade80;} .warn{color:#fbbf24;} .muted{color:#94a3b8;font-size:.85rem;}";
     html += ".pad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;max-width:240px;margin:1rem auto 0;}";
-    html += ".pad button{margin:0;padding:1rem 0;font-size:1.1rem;touch-action:manipulation;}";
-    html += ".pad .ghost{visibility:hidden;} .stop{background:#e11d48;}</style></head><body>";
+    html += ".pad button{margin:0;padding:1.15rem 0;font-size:1.15rem;touch-action:none;-webkit-user-select:none;user-select:none;}";
+    html += ".pad .ghost{visibility:hidden;} .stop{background:#e11d48;min-height:3.25rem;}</style></head><body>";
 
     html += "<div class='card'><h2>ESP32-C3 Vibe Car</h2>";
     html += "<p class='muted'>Firmware " + String(FW_VERSION) + " · profile " + String(CURRICULUM_PROFILE) + "</p>";
@@ -601,24 +601,22 @@ void handleRoot() {
     }
 
     html += "<h3>Drive</h3>";
-    html += "<div class='pad'>";
-    html += "<button class='ghost' type='button'>&nbsp;</button>";
-    html += "<button type='button' ontouchstart=\"hold(100,0);return false\" onmousedown=\"hold(100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▲</button>";
-    html += "<button class='ghost' type='button'>&nbsp;</button>";
-    html += "<button type='button' ontouchstart=\"hold(0,-100);return false\" onmousedown=\"hold(0,-100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">◀</button>";
-    html += "<button class='stop' type='button' "
-            "onpointerdown=\"release();event.preventDefault()\" "
-            "ontouchstart=\"release();return false\" "
-            "onmousedown=\"release();return false\">■</button>";
-    html += "<button type='button' ontouchstart=\"hold(0,100);return false\" onmousedown=\"hold(0,100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▶</button>";
-    html += "<button class='ghost' type='button'>&nbsp;</button>";
-    html += "<button type='button' ontouchstart=\"hold(-100,0);return false\" onmousedown=\"hold(-100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▼</button>";
-    html += "<button class='ghost' type='button'>&nbsp;</button>";
+    html += "<div class='pad' id='drivePad'>";
+    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
+    html += "<button type='button' data-cmd='F' id='btnF'>▲</button>";
+    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
+    html += "<button type='button' data-cmd='L' id='btnL'>◀</button>";
+    html += "<button class='stop' type='button' data-cmd='S' id='btnS'>■</button>";
+    html += "<button type='button' data-cmd='R' id='btnR'>▶</button>";
+    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
+    html += "<button type='button' data-cmd='B' id='btnB'>▼</button>";
+    html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
     html += "</div>";
     html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ for immediate stop.</p>";
-    // Single-flight HTTP queue: ■ preempts pending drive so stop is not stuck behind spam.
+    // iPhone Safari: while one finger holds ▲, the 2nd finger's event target is often wrong.
+    // Resolve the button under each touch with elementFromPoint + capture-phase listeners.
     html += "<script>"
-            "var timer=null,busy=false,forceStop=false,pending=null,hv=0,hw=0;"
+            "var timer=null,busy=false,forceStop=false,pending=null,hv=0,hw=0,activeDir=null;"
             "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}"
             "function pump(){"
             " if(busy)return;"
@@ -636,9 +634,60 @@ void handleRoot() {
             " timer=setInterval(function(){pending={v:hv,w:hw};pump();},320);"
             "}"
             "function release(){"
+            " activeDir=null;"
             " if(timer){clearInterval(timer);timer=null;}"
             " pending=null;forceStop=true;pump();"
             "}"
+            "function cmdFromEl(el){"
+            " while(el&&el!==document.body){"
+            "  if(el.getAttribute&&el.getAttribute('data-cmd'))return el.getAttribute('data-cmd');"
+            "  el=el.parentElement;"
+            " }"
+            " return null;"
+            "}"
+            "function applyCmd(cmd){"
+            " if(!cmd)return;"
+            " if(cmd==='S'){release();return;}"
+            " if(cmd==='F'){activeDir='F';hold(100,0);}"
+            " else if(cmd==='B'){activeDir='B';hold(-100,0);}"
+            " else if(cmd==='L'){activeDir='L';hold(0,-100);}"
+            " else if(cmd==='R'){activeDir='R';hold(0,100);}"
+            "}"
+            "function touchBtn(touch){"
+            " var el=document.elementFromPoint(touch.clientX,touch.clientY);"
+            " return cmdFromEl(el);"
+            "}"
+            "function onPadStart(e){"
+            " e.preventDefault();"
+            " for(var i=0;i<e.changedTouches.length;i++){"
+            "  applyCmd(touchBtn(e.changedTouches[i]));"
+            " }"
+            "}"
+            "function onPadEnd(e){"
+            " e.preventDefault();"
+            " var stillDir=false;"
+            " for(var i=0;i<e.touches.length;i++){"
+            "  var c=touchBtn(e.touches[i]);"
+            "  if(c&&c!=='S'){stillDir=true;applyCmd(c);break;}"
+            " }"
+            " if(!stillDir)release();"
+            "}"
+            "function onPadCancel(e){e.preventDefault();release();}"
+            "var pad=document.getElementById('drivePad');"
+            "pad.addEventListener('touchstart',onPadStart,{passive:false,capture:true});"
+            "pad.addEventListener('touchend',onPadEnd,{passive:false,capture:true});"
+            "pad.addEventListener('touchcancel',onPadCancel,{passive:false,capture:true});"
+            // Desktop mouse fallback
+            "pad.addEventListener('mousedown',function(e){"
+            " var c=cmdFromEl(e.target);if(!c)return;e.preventDefault();applyCmd(c);"
+            "});"
+            "window.addEventListener('mouseup',function(){release();});"
+            // Global capture: if Safari mis-targets, still catch coordinates over ■
+            "document.addEventListener('touchstart',function(e){"
+            " for(var i=0;i<e.changedTouches.length;i++){"
+            "  if(touchBtn(e.changedTouches[i])==='S'){release();e.preventDefault();}"
+            " }"
+            "},{passive:false,capture:true});"
             "</script>";
 
     html += "<hr style='border:0;border-top:1px solid #334155;margin:1.25rem 0;'>";
