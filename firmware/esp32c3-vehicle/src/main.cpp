@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.3-stoplatch"
+#define FW_VERSION                "1.3.4-stopq"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -134,7 +134,7 @@ void stopVehicle() {
     currentAngular = 0;
     lastPacketTime = millis();
     // Drop late HTTP/BLE drive packets that were already in flight when ■ / release fired.
-    ignoreDriveUntilMs = millis() + 450;
+    ignoreDriveUntilMs = millis() + 800;
 }
 
 void driveVehicle(int v, int w) {
@@ -606,24 +606,40 @@ void handleRoot() {
     html += "<button type='button' ontouchstart=\"hold(100,0);return false\" onmousedown=\"hold(100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▲</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "<button type='button' ontouchstart=\"hold(0,-100);return false\" onmousedown=\"hold(0,-100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">◀</button>";
-    html += "<button class='stop' type='button' ontouchstart=\"release();return false\" onmousedown=\"release();return false\" onclick=\"release();return false\">■</button>";
+    html += "<button class='stop' type='button' "
+            "onpointerdown=\"release();event.preventDefault()\" "
+            "ontouchstart=\"release();return false\" "
+            "onmousedown=\"release();return false\">■</button>";
     html += "<button type='button' ontouchstart=\"hold(0,100);return false\" onmousedown=\"hold(0,100)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▶</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "<button type='button' ontouchstart=\"hold(-100,0);return false\" onmousedown=\"hold(-100,0)\" ontouchend=\"release();return false\" onmouseup=\"release()\" onmouseleave=\"release()\">▼</button>";
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "</div>";
     html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ for immediate stop.</p>";
-    html += "<script>var t=null,gen=0,ac=null;"
-            "function go(v,w){if(ac){try{ac.abort();}catch(e){}}ac=new AbortController();"
-            "fetch('/api/drive?v='+v+'&w='+w,{signal:ac.signal}).catch(function(){});"
-            "var m=document.getElementById('drvMsg');if(m)m.textContent='v='+v+' w='+w;}"
-            "function stopNow(){if(ac){try{ac.abort();}catch(e){}}ac=null;"
-            "fetch('/api/drive?cmd=S').catch(function(){});"
-            "var m=document.getElementById('drvMsg');if(m)m.textContent='STOP';}"
-            "function hold(v,w){var g=++gen;function tick(){if(g!==gen)return;go(v,w);}"
-            "tick();if(t)clearInterval(t);t=setInterval(tick,180);}"
-            "function release(){gen++;if(t){clearInterval(t);t=null;}stopNow();"
-            "setTimeout(stopNow,30);setTimeout(stopNow,80);}</script>";
+    // Single-flight HTTP queue: ■ preempts pending drive so stop is not stuck behind spam.
+    html += "<script>"
+            "var timer=null,busy=false,forceStop=false,pending=null,hv=0,hw=0;"
+            "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}"
+            "function pump(){"
+            " if(busy)return;"
+            " var url=null;"
+            " if(forceStop){forceStop=false;pending=null;url='/api/drive?cmd=S';msg('STOP');}"
+            " else if(pending){url='/api/drive?v='+pending.v+'&w='+pending.w;msg('v='+pending.v+' w='+pending.w);pending=null;}"
+            " if(!url)return;"
+            " busy=true;"
+            " fetch(url).catch(function(){}).finally(function(){busy=false;if(forceStop||pending)pump();});"
+            "}"
+            "function hold(v,w){"
+            " hv=v;hw=w;forceStop=false;pending={v:v,w:w};"
+            " if(timer)clearInterval(timer);"
+            " pump();"
+            " timer=setInterval(function(){pending={v:hv,w:hw};pump();},320);"
+            "}"
+            "function release(){"
+            " if(timer){clearInterval(timer);timer=null;}"
+            " pending=null;forceStop=true;pump();"
+            "}"
+            "</script>";
 
     html += "<hr style='border:0;border-top:1px solid #334155;margin:1.25rem 0;'>";
     html += "<h3>OTA Update</h3>";
