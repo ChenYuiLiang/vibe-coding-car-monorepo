@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.10-eco"
+#define FW_VERSION                "1.3.11-landlock"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -589,10 +589,11 @@ void handleRoot() {
     // Layout aligned with curriculum S02: nested Flex D-pad, ≤600px column, speed flex:1
     html += "<style>"
             "*{box-sizing:border-box;}"
-            "html,body{margin:0;min-height:100%;}"
+            "html,body{margin:0;height:100%;}"
             "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
             "padding:max(0.75rem,env(safe-area-inset-top)) max(0.75rem,env(safe-area-inset-right))"
-            " max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left));}"
+            " max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left));"
+            "overscroll-behavior:none;}"
             ".shell{display:flex;flex-direction:row;flex-wrap:wrap;gap:0.85rem;max-width:960px;margin:0 auto;"
             "min-height:calc(100dvh - 1.5rem);align-items:stretch;}"
             ".card{background:#1e293b;border-radius:1rem;padding:1rem 1.15rem;}"
@@ -617,7 +618,7 @@ void handleRoot() {
             "touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}"
             ".d-pad .stop{background:#e11d48;}"
             /* S02-3 speed group: gap≥1rem + flex:1 */
-            ".speed-controls{display:flex;gap:1rem;width:100%;max-width:300px;margin-top:.25rem;}"
+            ".speed-controls{display:flex;gap:1rem;width:100%;max-width:300px;margin-top:.25rem;flex-shrink:0;}"
             ".speed-controls .speed{flex:1;margin-top:0;padding:.7rem .4rem;font-size:.8rem;background:#334155;}"
             ".speed-controls .speed.active{background:#38bdf8;color:#0f172a;}"
             "#drvMsg{margin:.75rem 0 0;text-align:center;}"
@@ -627,14 +628,23 @@ void handleRoot() {
             ".shell{flex-direction:column;}"
             ".status,.drive,.config{flex:1 1 auto;width:100%;}"
             "}"
-            "@media (orientation:landscape) and (max-height:480px){"
-            ".shell{flex-wrap:nowrap;}"
-            ".status{flex:0 1 36%;overflow:auto;max-height:calc(100dvh - 1.5rem);}"
+            /* Landscape: lock page scroll; keep pad + ECO/NORM/TURBO visible */
+            "@media (orientation:landscape) and (max-height:500px){"
+            "html,body{overflow:hidden;height:100dvh;touch-action:manipulation;}"
+            ".shell{flex-wrap:nowrap;gap:.5rem;min-height:0;height:calc(100dvh - 1rem);overflow:hidden;}"
+            ".status{flex:0 0 32%;max-width:32%;overflow:auto;max-height:100%;padding:.65rem .75rem;}"
+            ".status h2{font-size:.95rem;}"
             ".status .muted{display:none;}"
-            ".drive{flex:1 1 58%;}"
+            ".drive{flex:1 1 68%;min-width:0;max-height:100%;overflow:hidden;padding:.55rem .7rem;"
+            "justify-content:flex-start;}"
+            ".drive h3{margin:0 0 .35rem;font-size:.85rem;}"
+            ".drive h4{margin:.45rem 0 .3rem;}"
             ".config{display:none;}"
-            ".d-pad button{width:52px;height:52px;font-size:1.05rem;}"
-            ".d-pad,.d-pad-row{gap:.65rem;}"
+            ".d-pad,.d-pad-row{gap:.45rem;}"
+            ".d-pad button{width:44px;height:44px;min-width:44px;min-height:44px;font-size:1rem;}"
+            ".speed-controls{max-width:220px;gap:.5rem;}"
+            ".speed-controls .speed{padding:.45rem .2rem;font-size:.7rem;}"
+            "#drvMsg{margin:.35rem 0 0;font-size:.75rem;}"
             "}"
             "</style></head><body>";
 
