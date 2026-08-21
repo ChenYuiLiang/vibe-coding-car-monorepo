@@ -71,6 +71,12 @@ STA 時查 IP 的方式：
 步驟細節：[`apps/web-controller/README.md`](apps/web-controller/README.md)  
 整車聯調：[`curriculum/Integration-Lab.md`](curriculum/Integration-Lab.md)
 
+**畫面參考**
+
+| 連線入口（開發機） | 車載遙控頁（產品） |
+|--|--|
+| ![連線入口](docs/assets/guide-connect-launcher.png) | ![車載頁](docs/assets/guide-connect-car-page.png) |
+
 ### 韌體建置與 OTA（車必須已能開 HTTP）
 
 ```bash

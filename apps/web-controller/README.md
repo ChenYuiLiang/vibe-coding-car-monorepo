@@ -37,6 +37,16 @@ STA 連成功後 SoftAP 會關閉（設計如此），所以掃不到 `ESP32-Car
 
 成功連線後會把位址記在瀏覽器 `localStorage`，下次開啟會還原。
 
+### 畫面參考
+
+**1. 連線入口（`npm run dev`）** — 找車 IP、跳轉車載頁：
+
+![連線入口：開啟車載遙控頁](../../docs/assets/guide-connect-launcher.png)
+
+**2. 車載遙控頁（產品 UI）** — STA 時會顯示目前 IP（例：`192.168.1.178`）；SoftAP 則為 `192.168.4.1`：
+
+![車載遙控與配網頁](../../docs/assets/guide-connect-car-page.png)
+
 ## 手動查 STA IP（自動尋找失敗時）
 
 1. 試 `http://esp32-car.local`（部分系統不可用）
