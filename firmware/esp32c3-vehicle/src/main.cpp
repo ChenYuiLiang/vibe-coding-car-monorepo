@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.8-s02align"
+#define FW_VERSION                "1.3.9-speedband"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -30,6 +30,7 @@
 #define MOTOR_PWM_FREQ_HZ         20000  // curriculum basic-04 / h-bridge target
 #define MOTOR_PWM_RES_BITS        8
 #define MOTOR_START_OFFSET        60     // curriculum friction / dead-zone compensation
+#define MOTOR_CMD_PWM_MIN         150    // usable floor so ECO/NORM still spin this chassis
 #define LEDC_CH_LEFT              0
 #define LEDC_CH_RIGHT             1
 // BLE 0xAA opcode: factory clear WiFi (must pair with confirm byte)
@@ -153,8 +154,16 @@ void driveVehicle(int v, int w) {
     emergencyStopTriggered = false;
     vehicleState = VEHICLE_RUNNING;
 
-    int vPwm = map(v, -100, 100, -255, 255);
-    int wPwm = map(w, -100, 100, -255, 255);
+    // Map command ±1..100 into a usable PWM band (not 0..255).
+    // Linear map(v,-100,100,-255,255) left ECO/NORM below what this chassis needs to start.
+    auto axisToPwm = [](int x) -> int {
+        if (x == 0) return 0;
+        int mag = constrain(abs(x), 1, 100);
+        int pwm = map(mag, 1, 100, MOTOR_CMD_PWM_MIN, 255);
+        return x < 0 ? -pwm : pwm;
+    };
+    int vPwm = axisToPwm(v);
+    int wPwm = axisToPwm(w);
     setMotorSpeeds(vPwm + wPwm, vPwm - wPwm);
     digitalWrite(LED_INDICATOR, HIGH);
 }
@@ -656,13 +665,13 @@ void handleRoot() {
     html += "</div>";
     html += "<h4>Transmission</h4>";
     html += "<div class='speed-controls' id='speedPad'>";
-    html += "<button type='button' class='speed' data-speed='40'>ECO</button>";
-    html += "<button type='button' class='speed active' data-speed='70'>NORM</button>";
+    html += "<button type='button' class='speed' data-speed='55'>ECO</button>";
+    html += "<button type='button' class='speed active' data-speed='80'>NORM</button>";
     html += "<button type='button' class='speed' data-speed='100'>TURBO</button>";
     html += "</div>";
     html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ or release to stop.</p>";
     html += "<script>"
-            "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=70,activeDir=null;"
+            "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=80,activeDir=null;"
             "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}"
             "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});msg('v='+v+' w='+w+' · spd='+speed);}"
             "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});msg('STOP · spd='+speed);}"
