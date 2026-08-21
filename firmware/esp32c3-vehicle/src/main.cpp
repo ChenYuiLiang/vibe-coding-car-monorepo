@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.2-stopfix"
+#define FW_VERSION                "1.3.3-stoplatch"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -66,6 +66,7 @@ enum VehicleState {
 bool deviceConnected = false;
 unsigned long lastPacketTime = 0;
 bool emergencyStopTriggered = false;
+unsigned long ignoreDriveUntilMs = 0;
 int currentVelocity = 0;
 int currentAngular = 0;
 VehicleState vehicleState = VEHICLE_IDLE;
@@ -131,9 +132,21 @@ void stopVehicle() {
     }
     currentVelocity = 0;
     currentAngular = 0;
+    lastPacketTime = millis();
+    // Drop late HTTP/BLE drive packets that were already in flight when ■ / release fired.
+    ignoreDriveUntilMs = millis() + 450;
 }
 
 void driveVehicle(int v, int w) {
+    if ((v != 0 || w != 0) && (long)(millis() - ignoreDriveUntilMs) < 0) {
+        Serial.println("[Drive] Ignored — stop latch active");
+        return;
+    }
+    if (v == 0 && w == 0) {
+        stopVehicle();
+        emergencyStopTriggered = false;
+        return;
+    }
     currentVelocity = v;
     currentAngular = w;
     lastPacketTime = millis();
@@ -600,14 +613,17 @@ void handleRoot() {
     html += "<button class='ghost' type='button'>&nbsp;</button>";
     html += "</div>";
     html += "<p class='muted' id='drvMsg'>Hold a direction to drive. Tap ■ for immediate stop.</p>";
-    html += "<script>var t=null,gen=0;"
-            "function go(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});"
+    html += "<script>var t=null,gen=0,ac=null;"
+            "function go(v,w){if(ac){try{ac.abort();}catch(e){}}ac=new AbortController();"
+            "fetch('/api/drive?v='+v+'&w='+w,{signal:ac.signal}).catch(function(){});"
             "var m=document.getElementById('drvMsg');if(m)m.textContent='v='+v+' w='+w;}"
-            "function stopNow(){fetch('/api/drive?cmd=S').catch(function(){});"
+            "function stopNow(){if(ac){try{ac.abort();}catch(e){}}ac=null;"
+            "fetch('/api/drive?cmd=S').catch(function(){});"
             "var m=document.getElementById('drvMsg');if(m)m.textContent='STOP';}"
             "function hold(v,w){var g=++gen;function tick(){if(g!==gen)return;go(v,w);}"
-            "tick();if(t)clearInterval(t);t=setInterval(tick,200);}"
-            "function release(){gen++;if(t){clearInterval(t);t=null;}stopNow();stopNow();}</script>";
+            "tick();if(t)clearInterval(t);t=setInterval(tick,180);}"
+            "function release(){gen++;if(t){clearInterval(t);t=null;}stopNow();"
+            "setTimeout(stopNow,30);setTimeout(stopNow,80);}</script>";
 
     html += "<hr style='border:0;border-top:1px solid #334155;margin:1.25rem 0;'>";
     html += "<h3>OTA Update</h3>";
@@ -1015,7 +1031,10 @@ void loop() {
 
     maybeMarkOtaAppValid();
 
-    if (!emergencyStopTriggered && (millis() - lastPacketTime > WATCHDOG_TIMEOUT_MS)) {
+    // Watchdog only while commanded to move — idle after ■ must not become FAULT.
+    if (vehicleState == VEHICLE_RUNNING &&
+        !emergencyStopTriggered &&
+        (millis() - lastPacketTime > WATCHDOG_TIMEOUT_MS)) {
         stopVehicle();
         emergencyStopTriggered = true;
         vehicleState = VEHICLE_FAULT;
