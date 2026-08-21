@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.3.6-holdfix"
+#define FW_VERSION                "1.3.7-rwd"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -575,19 +575,58 @@ String htmlEscape(const String &in) {
 
 void handleRoot() {
     String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
-    html += "<meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'>";
     html += "<title>ESP32-C3 Vibe Car</title>";
-    html += "<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;padding:1.25rem;margin:0;}";
-    html += ".card{background:#1e293b;border-radius:1rem;padding:1.25rem;max-width:520px;margin:0 auto 1rem;}";
-    html += "label{display:block;margin-top:.75rem;font-size:.9rem;color:#cbd5e1;}";
-    html += "input[type=text],input[type=password],input[type=file]{width:100%;box-sizing:border-box;margin:.4rem 0 0;padding:.75rem;background:#090d16;border:1px solid #334155;border-radius:.5rem;color:#38bdf8;}";
-    html += "input[type=submit],button{background:#0284c7;color:#fff;border:none;padding:.75rem 1rem;border-radius:.5rem;font-weight:700;cursor:pointer;width:100%;margin-top:.9rem;}";
-    html += "button.danger{background:#e11d48;} .ok{color:#4ade80;} .warn{color:#fbbf24;} .muted{color:#94a3b8;font-size:.85rem;}";
-    html += ".pad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;max-width:240px;margin:1rem auto 0;}";
-    html += ".pad button{margin:0;padding:1.15rem 0;font-size:1.15rem;touch-action:none;-webkit-user-select:none;user-select:none;}";
-    html += ".pad .ghost{visibility:hidden;} .stop{background:#e11d48;min-height:3.25rem;}</style></head><body>";
+    html += "<style>"
+            "*{box-sizing:border-box;}"
+            "html,body{margin:0;min-height:100%;}"
+            "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
+            "padding:max(0.75rem,env(safe-area-inset-top)) max(0.75rem,env(safe-area-inset-right))"
+            " max(0.75rem,env(safe-area-inset-bottom)) max(0.75rem,env(safe-area-inset-left));}"
+            ".shell{display:flex;flex-direction:column;gap:0.85rem;max-width:960px;margin:0 auto;min-height:calc(100dvh - 1.5rem);}"
+            ".card{background:#1e293b;border-radius:1rem;padding:1rem 1.15rem;}"
+            ".status h2{margin:0 0 .35rem;font-size:1.2rem;}"
+            ".status p{margin:.35rem 0;}"
+            "label{display:block;margin-top:.75rem;font-size:.9rem;color:#cbd5e1;}"
+            "input[type=text],input[type=password],input[type=file]{width:100%;margin:.4rem 0 0;padding:.75rem;"
+            "background:#090d16;border:1px solid #334155;border-radius:.5rem;color:#38bdf8;}"
+            "input[type=submit],button{background:#0284c7;color:#fff;border:none;padding:.75rem 1rem;border-radius:.5rem;"
+            "font-weight:700;cursor:pointer;width:100%;margin-top:.9rem;}"
+            "button.danger{background:#e11d48;}"
+            ".ok{color:#4ade80;}.warn{color:#fbbf24;}.muted{color:#94a3b8;font-size:.85rem;}"
+            ".drive{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1 1 auto;}"
+            ".drive h3{align-self:stretch;margin:.1rem 0 .5rem;}"
+            ".pad{display:grid;grid-template-columns:repeat(3,minmax(56px,1fr));gap:1rem;"
+            "width:min(72vw,280px);margin:0 auto;}"
+            ".pad button{margin:0;min-width:56px;min-height:56px;padding:0;font-size:1.25rem;"
+            "touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}"
+            ".pad .ghost{visibility:hidden;pointer-events:none;}"
+            ".stop{background:#e11d48;}"
+            "#drvMsg{margin:.75rem 0 0;text-align:center;}"
+            ".config hr{border:0;border-top:1px solid #334155;margin:1.1rem 0;}"
+            /* ≥600px or roomy landscape: status | drive side-by-side; config full width */
+            "@media (min-width:600px){"
+            ".shell{flex-direction:row;flex-wrap:wrap;align-items:stretch;}"
+            ".status{flex:1 1 280px;order:1;}"
+            ".drive{flex:1 1 320px;order:2;}"
+            ".config{flex:1 1 100%;order:3;}"
+            ".pad{width:min(42vw,300px);}"
+            "}"
+            /* short landscape phones: keep pad reachable, shrink chrome */
+            "@media (orientation:landscape) and (max-height:480px){"
+            ".shell{flex-direction:row;flex-wrap:nowrap;gap:.65rem;min-height:auto;}"
+            ".status{flex:0 1 38%;order:1;overflow:auto;max-height:calc(100dvh - 1.5rem);padding:.75rem;}"
+            ".status h2{font-size:1rem;}"
+            ".status .muted{display:none;}"
+            ".drive{flex:1 1 55%;order:2;padding:.75rem;}"
+            ".config{display:none;}"
+            ".pad{width:min(46vh,240px);gap:.65rem;}"
+            ".pad button{min-width:48px;min-height:48px;font-size:1.05rem;}"
+            "}"
+            "</style></head><body>";
 
-    html += "<div class='card'><h2>ESP32-C3 Vibe Car</h2>";
+    html += "<div class='shell'>";
+    html += "<section class='card status'><h2>ESP32-C3 Vibe Car</h2>";
     html += "<p class='muted'>Firmware " + String(FW_VERSION) + " · profile " + String(CURRICULUM_PROFILE) + "</p>";
     html += "<p>BLE: <strong>" + String(deviceConnected ? "Connected" : (bleStarted ? "Advertising" : "Starting")) + "</strong> (" + String(BLE_DEVICE_NAME) + ")</p>";
     html += "<p>FSM: <strong>" + String(vehicleStateName()) + "</strong></p>";
@@ -599,8 +638,9 @@ void handleRoot() {
         html += "<p class='warn'>Mode: <strong>AP</strong> — join WiFi <strong>" + String(AP_SSID) + "</strong> / password <strong>" + String(AP_PASS) + "</strong></p>";
         html += "<p class='muted'>Config page: http://192.168.4.1 &nbsp;|&nbsp; mDNS: http://esp32-car.local</p>";
     }
+    html += "</section>";
 
-    html += "<h3>Drive</h3>";
+    html += "<section class='card drive'><h3>Drive</h3>";
     html += "<div class='pad' id='drivePad'>";
     html += "<button class='ghost' type='button' tabindex='-1'>&nbsp;</button>";
     html += "<button type='button' data-cmd='F' id='btnF'>▲</button>";
@@ -701,16 +741,16 @@ void handleRoot() {
             "  if(c==='S'){dirTouches[t.identifier]='S';release();e.preventDefault();}"
             " }"
             "},{passive:false,capture:true});"
-            "</script>";
+            "</script></section>";
 
-    html += "<hr style='border:0;border-top:1px solid #334155;margin:1.25rem 0;'>";
+    html += "<section class='card config'>";
     html += "<h3>OTA Update</h3>";
     html += "<form method='POST' action='/update' enctype='multipart/form-data'>";
     html += "<label>Firmware .bin</label><input type='file' name='update' accept='.bin' required>";
     html += "<input type='submit' value='Upload OTA'>";
-    html += "</form></div>";
+    html += "</form>";
 
-    html += "<div class='card'><h3>WiFi Provisioning</h3>";
+    html += "<hr><h3>WiFi Provisioning</h3>";
     html += "<form method='POST' action='/api/wifi/config'>";
     html += "<label>Home WiFi SSID</label><input type='text' name='ssid' value='" + htmlEscape(savedSsid) + "' placeholder='e.g. chen' required>";
     html += "<label>Home WiFi Password</label><input type='password' name='pass' value='" + htmlEscape(savedPass) + "' placeholder='password'>";
@@ -724,7 +764,7 @@ void handleRoot() {
     }
     html += "<p class='muted'>Factory reset: hold <strong>BOOT</strong> 3s at power-on / 5s while running, or BLE <code>[0xAA,0xF1,0xA5,cs]</code>, or Clear WiFi above. RESET only reboots.</p>";
     html += "<p class='muted'>Curriculum profile: AP↔STA · BLE 0xFF/0xAA · HTTP /api + /api/v1 · LEDC 20kHz · FSM IDLE/RUNNING/FAULT</p>";
-    html += "</div></body></html>";
+    html += "</section></div></body></html>";
 
     sendText(200, "text/html", html);
 }
