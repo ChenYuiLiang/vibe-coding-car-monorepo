@@ -15,7 +15,7 @@
 | 序 | 作業 | GitHub | 結果 |
 |--|--|--|--|
 | S01 | html5-basics | https://github.com/vibe-coding-classroom/car-starter-html5-basics-kUUp1Pe8 | PASS |
-| S02 | flexbox-layout | https://github.com/vibe-coding-classroom/car-starter-flexbox-layout-kUUp1Pe8 | |
+| S02 | flexbox-layout | https://github.com/vibe-coding-classroom/car-starter-flexbox-layout-kUUp1Pe8 | PASS |
 | S03 | ui-ux-standards | https://github.com/vibe-coding-classroom/car-starter-ui-ux-standards-kUUp1Pe8 | |
 | S04 | ble-async | https://github.com/vibe-coding-classroom/car-starter-ble-async-kUUp1Pe8 | |
 | S05 | ble-security | https://github.com/vibe-coding-classroom/car-starter-ble-security-kUUp1Pe8 | |
