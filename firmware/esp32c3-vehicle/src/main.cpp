@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.4.0-s03hud"
+#define FW_VERSION                "1.4.1-s07align"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -590,12 +590,16 @@ void handleRoot() {
     String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>";
     html += "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'>";
     html += "<title>ESP32-C3 Vibe Car</title>";
+    // S02 nested-flex spirit + S03 HUD + S07 grid square pad / engine lock / press feel / glass
     html += "<style>"
             "*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}"
             "html,body{margin:0;height:100%;}"
-            "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0b1220;color:#f8fafc;"
-            "overflow:hidden;overscroll-behavior:none;"
+            "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f8fafc;"
+            "overflow:hidden;overscroll-behavior:none;background:#070b14;"
             "padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}"
+            ".glow{position:fixed;inset:0;z-index:0;pointer-events:none;"
+            "background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(56,189,248,.18),transparent),"
+            "radial-gradient(ellipse 50% 35% at 90% 80%,rgba(99,102,241,.16),transparent);}"
             ".vignette{pointer-events:none;position:fixed;inset:0;opacity:0;z-index:40;}"
             "body.state-warning .vignette{opacity:1;animation:vig 1.2s ease-in-out infinite alternate;"
             "box-shadow:inset 0 0 80px 24px rgba(239,68,68,.45);}"
@@ -609,7 +613,7 @@ void handleRoot() {
             "body.state-warning .alert{display:block;animation:shake .45s ease-in-out infinite;}"
             "@keyframes shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 4px))}"
             "75%{transform:translateX(calc(-50% + 4px))}}"
-            ".hud{position:relative;height:100dvh;display:flex;flex-direction:column;}"
+            ".hud{position:relative;z-index:1;height:100dvh;display:flex;flex-direction:column;}"
             ".hud-top{flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-start;"
             "gap:.5rem;padding:.55rem .7rem 0;z-index:20;}"
             ".tel{display:flex;flex-direction:column;gap:.2rem;min-width:0;}"
@@ -621,32 +625,53 @@ void handleRoot() {
             ".testbed span{font-size:.58rem;letter-spacing:.08em;color:#64748b;text-transform:uppercase;}"
             ".testbed .btns{display:flex;gap:.35rem;}"
             ".testbed button{margin:0;width:auto;padding:.35rem .55rem;font-size:.65rem;background:#334155;"
-            "border:none;border-radius:.4rem;color:#fff;font-weight:700;}"
+            "border:none;border-radius:.4rem;color:#fff;font-weight:700;min-width:44px;min-height:44px;}"
             ".stage{flex:1 1 auto;position:relative;min-height:0;}"
-            ".safe{position:absolute;left:50%;top:50%;width:40vw;height:40vh;transform:translate(-50%,-50%);"
+            ".safe{position:absolute;left:50%;top:42%;width:40vw;height:36vh;transform:translate(-50%,-50%);"
             "border:1px dashed rgba(56,189,248,.35);border-radius:12px;pointer-events:none;z-index:1;}"
             ".safe span{position:absolute;left:50%;top:.25rem;transform:translateX(-50%);font-size:.55rem;"
             "color:rgba(148,163,184,.8);letter-spacing:.06em;white-space:nowrap;}"
-            ".tape{position:absolute;top:50%;transform:translateY(-50%);width:3.2rem;padding:.4rem .25rem;"
-            "background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.25);border-radius:.5rem;"
-            "text-align:center;z-index:5;font-size:.65rem;color:#94a3b8;}"
+            ".tape{position:absolute;top:42%;transform:translateY(-50%);width:3.2rem;padding:.4rem .25rem;"
+            "background:rgba(15,23,42,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);"
+            "border:1px solid rgba(148,163,184,.25);border-radius:.5rem;text-align:center;z-index:5;"
+            "font-size:.65rem;color:#94a3b8;}"
             ".tape.left{left:max(.4rem,calc(50% - 20vw - 3.6rem));}"
             ".tape.right{right:max(.4rem,calc(50% - 20vw - 3.6rem));}"
             ".tape b{display:block;color:#f8fafc;font-size:.95rem;margin-top:.15rem;}"
-            ".thumb{flex:0 0 33dvh;min-height:220px;max-height:42dvh;display:flex;flex-direction:column;"
-            "align-items:center;justify-content:flex-end;gap:.55rem;padding:0 .75rem max(.6rem,env(safe-area-inset-bottom));"
-            "background:linear-gradient(180deg,transparent,rgba(15,23,42,.92) 28%);z-index:15;}"
-            ".d-pad{display:flex;flex-direction:column;align-items:center;gap:1rem;}"
-            ".d-pad-row{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:1rem;}"
-            ".d-pad button,.speed-controls .speed{touch-action:none;-webkit-user-select:none;user-select:none;"
-            "-webkit-touch-callout:none;margin:0;}"
-            ".d-pad button{width:clamp(56px,14vw,72px);height:clamp(56px,14vw,72px);font-size:1.2rem;"
-            "background:#0284c7;border:none;border-radius:.75rem;color:#fff;font-weight:700;}"
+            ".thumb{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;"
+            "gap:.55rem;padding:.75rem .75rem max(.7rem,env(safe-area-inset-bottom));z-index:15;}"
+            ".panel{width:min(92vw,360px);padding:1rem 1rem .85rem;border-radius:1.1rem;"
+            "background:rgba(16,20,38,.65);border:1px solid rgba(255,255,255,.1);"
+            "backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);"
+            "display:flex;flex-direction:column;align-items:center;gap:.65rem;}"
+            /* S07: square Grid D-pad — no deformation */
+            ".d-pad{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);"
+            "grid-template-areas:'. up .' 'left stop right' '. down .';gap:1rem;"
+            "width:min(280px,75vw,35vh);aspect-ratio:1/1;margin:0 auto;}"
+            ".d-pad .up{grid-area:up;}.d-pad .left{grid-area:left;}.d-pad .right{grid-area:right;}"
+            ".d-pad .down{grid-area:down;}.d-pad .stop{grid-area:stop;}"
+            ".d-pad button,.speed-controls .speed,#engineBtn{touch-action:none;-webkit-user-select:none;"
+            "user-select:none;-webkit-touch-callout:none;margin:0;}"
+            ".d-pad button{width:100%;height:100%;min-width:44px;min-height:44px;font-size:1.15rem;"
+            "background:#0284c7;border:none;border-radius:.85rem;color:#fff;font-weight:700;"
+            "box-shadow:0 6px 14px rgba(0,0,0,.35);transition:transform .08s,box-shadow .08s,filter .15s,opacity .15s;}"
             ".d-pad .stop{background:#e11d48;}"
-            ".speed-controls{display:flex;gap:1rem;width:min(92vw,320px);}"
+            ".d-pad button:not(:disabled):active{transform:translateY(3px) scale(0.95);"
+            "box-shadow:inset 0 4px 8px rgba(0,0,0,.45);}"
+            ".d-pad button:disabled,.speed-controls .speed:disabled{opacity:.3;filter:grayscale(.85);"
+            "cursor:not-allowed;box-shadow:none;}"
+            ".speed-controls{display:flex;gap:1rem;width:100%;}"
             ".speed-controls .speed{flex:1;padding:.65rem .3rem;font-size:.75rem;background:#334155;"
-            "border:none;border-radius:.55rem;color:#fff;font-weight:700;}"
+            "border:none;border-radius:.55rem;color:#fff;font-weight:700;min-height:44px;}"
             ".speed-controls .speed.active{background:#38bdf8;color:#0f172a;}"
+            ".speed-controls .speed:not(:disabled):active{transform:translateY(2px) scale(0.97);}"
+            "#engineBtn{width:100%;min-height:48px;border:none;border-radius:999px;font-weight:800;"
+            "letter-spacing:.04em;background:linear-gradient(135deg,#e11d48,#9f1239);color:#fff;"
+            "box-shadow:0 0 24px rgba(225,29,72,.35);}"
+            "#engineBtn.on{background:linear-gradient(135deg,#22d3ee,#0284c7);"
+            "box-shadow:0 0 28px rgba(34,211,238,.4);animation:engPulse 1.6s ease-in-out infinite;}"
+            "@keyframes engPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.15)}}"
+            "#engineBtn:active{transform:translateY(2px) scale(0.98);}"
             "#drvMsg{margin:0;font-size:.72rem;color:#94a3b8;text-align:center;min-height:1em;}"
             ".config{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:70dvh;overflow:auto;"
             "background:#1e293b;border-radius:1rem 1rem 0 0;padding:0 1rem 1rem;transform:translateY(calc(100% - 2.4rem));"
@@ -664,20 +689,20 @@ void handleRoot() {
             "@media (orientation:landscape) and (max-height:500px){"
             ".hud-top{padding:.35rem .5rem 0;}"
             ".testbed{flex-direction:row;gap:.45rem;align-items:center;}"
-            ".safe{width:34vw;height:48vh;}"
-            ".tape{width:2.6rem;font-size:.58rem;}"
-            ".tape.left{left:max(.25rem,calc(50% - 17vw - 3rem));}"
-            ".tape.right{right:max(.25rem,calc(50% - 17vw - 3rem));}"
-            ".thumb{flex-basis:auto;min-height:0;max-height:none;flex-direction:row;flex-wrap:wrap;"
-            "justify-content:center;align-items:center;gap:.45rem 1rem;padding-bottom:.35rem;}"
-            ".d-pad,.d-pad-row{gap:.45rem;}"
-            ".d-pad button{width:44px;height:44px;font-size:1rem;}"
-            ".speed-controls{width:min(46vw,240px);gap:.45rem;}"
-            ".speed-controls .speed{padding:.4rem .2rem;font-size:.65rem;}"
+            ".safe{width:30vw;height:42vh;top:45%;}"
+            ".tape{width:2.6rem;font-size:.58rem;top:45%;}"
+            ".tape.left{left:max(.25rem,calc(50% - 15vw - 3rem));}"
+            ".tape.right{right:max(.25rem,calc(50% - 15vw - 3rem));}"
+            ".thumb{padding:.35rem .5rem;}"
+            ".panel{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;"
+            "width:min(96vw,640px);gap:.5rem 1rem;padding:.55rem .75rem;}"
+            ".d-pad{width:min(200px,42vh);gap:.45rem;}"
+            ".speed-controls{width:min(200px,40vw);gap:.45rem;}"
+            "#engineBtn{width:auto;min-width:140px;padding:0 1rem;}"
             ".config{display:none;}"
             "}"
             "</style></head><body>";
-    html += "<div class='vignette'></div><div class='alert' id='alertBanner'>WARNING</div>";
+    html += "<div class='glow'></div><div class='vignette'></div><div class='alert' id='alertBanner'>WARNING</div>";
     html += "<div class='hud'><header class='hud-top'>";
     html += "<div class='tel'><div class='row'>SIG <span class='val'>WiFi</span> "
             "<span class='badge ok' id='linkBadge'>LINK</span></div>";
@@ -693,19 +718,19 @@ void handleRoot() {
     html += "<div class='stage'><div class='safe'><span>40% CORE SAFETY ZONE</span></div>";
     html += "<div class='tape left'>SPD<b id='spdVal'>0</b></div>";
     html += "<div class='tape right'>THR<b id='thrVal'>88</b></div></div>";
-    html += "<section class='thumb'>";
+    html += "<section class='thumb'><div class='panel'>";
+    html += "<button type='button' id='engineBtn'>ENGINE START</button>";
     html += "<div class='d-pad' id='drivePad'>";
-    html += "<div class='d-pad-row top'><button type='button' data-cmd='F'>▲</button></div>";
-    html += "<div class='d-pad-row middle'>";
-    html += "<button type='button' data-cmd='L'>◀</button>";
-    html += "<button class='stop' type='button' data-cmd='S'>■</button>";
-    html += "<button type='button' data-cmd='R'>▶</button></div>";
-    html += "<div class='d-pad-row bottom'><button type='button' data-cmd='B'>▼</button></div></div>";
+    html += "<button class='up' type='button' data-cmd='F' disabled>▲</button>";
+    html += "<button class='left' type='button' data-cmd='L' disabled>◀</button>";
+    html += "<button class='stop' type='button' data-cmd='S' disabled>■</button>";
+    html += "<button class='right' type='button' data-cmd='R' disabled>▶</button>";
+    html += "<button class='down' type='button' data-cmd='B' disabled>▼</button></div>";
     html += "<div class='speed-controls' id='speedPad'>";
-    html += "<button type='button' class='speed' data-speed='70'>ECO</button>";
-    html += "<button type='button' class='speed active' data-speed='88'>NORM</button>";
-    html += "<button type='button' class='speed' data-speed='100'>TURBO</button></div>";
-    html += "<p id='drvMsg'>Hold direction · ■ stop</p></section></div>";
+    html += "<button type='button' class='speed' data-speed='70' disabled>ECO</button>";
+    html += "<button type='button' class='speed active' data-speed='88' disabled>NORM</button>";
+    html += "<button type='button' class='speed' data-speed='100' disabled>TURBO</button></div>";
+    html += "<p id='drvMsg'>Start engine to drive</p></div></section></div>";
     html += "<details class='config' id='configPanel'><summary>OTA · WiFi · Settings</summary>";
     html += "<h3>OTA Update</h3><form method='POST' action='/update' enctype='multipart/form-data'>";
     html += "<label>Firmware .bin</label><input type='file' name='update' accept='.bin' required>";
@@ -722,28 +747,35 @@ void handleRoot() {
     }
     html += "<p class='muted'>Factory reset: hold BOOT 3s at power-on / 5s while running.</p></details>";
     html += "<script>";
-    html += "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=88,activeDir=null;";
+    html += "var timer=null,holding=false,hv=0,hw=0,dirTouches={},mouseOn=false,ignoreMouseUntil=0,speed=88,activeDir=null,engineOn=false;";
     html += "function msg(t){var m=document.getElementById('drvMsg');if(m)m.textContent=t;}";
     html += "function setTapes(v,w){var s=document.getElementById('spdVal');var t=document.getElementById('thrVal');";
     html += "if(s)s.textContent=String(Math.abs(v||0));if(t)t.textContent=String(speed);}";
     html += "function warn(on,text){document.body.classList.toggle('state-warning',!!on);";
     html += "var a=document.getElementById('alertBanner');if(a)a.textContent=text||'WARNING';}";
-    html += "function sendDrive(v,w){fetch('/api/drive?v='+v+'&w='+w).catch(function(){});setTapes(v,w);msg('v='+v+' w='+w+' · spd='+speed);}";
-    html += "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});setTapes(0,0);msg('STOP · spd='+speed);}";
-    html += "function hold(v,w){holding=true;hv=v;hw=w;sendDrive(v,w);if(timer)clearInterval(timer);";
+    html += "function setEngine(on){engineOn=!!on;var btn=document.getElementById('engineBtn');";
+    html += "if(btn){btn.classList.toggle('on',engineOn);btn.textContent=engineOn?'ENGINE RUNNING':'ENGINE START';}";
+    html += "var nodes=document.querySelectorAll('#drivePad button,#speedPad .speed');";
+    html += "for(var i=0;i<nodes.length;i++)nodes[i].disabled=!engineOn;";
+    html += "if(!engineOn){release();msg('Start engine to drive');}else{msg('Hold direction · ■ stop');}}";
+    html += "function sendDrive(v,w){if(!engineOn)return;fetch('/api/drive?v='+v+'&w='+w).catch(function(){});";
+    html += "setTapes(v,w);msg('v='+v+' w='+w+' · spd='+speed);}";
+    html += "function sendStop(){fetch('/api/drive?cmd=S').catch(function(){});setTapes(0,0);";
+    html += "msg(engineOn?'STOP · spd='+speed:'Start engine to drive');}";
+    html += "function hold(v,w){if(!engineOn)return;holding=true;hv=v;hw=w;sendDrive(v,w);if(timer)clearInterval(timer);";
     html += "timer=setInterval(function(){if(holding)sendDrive(hv,hw);},220);}";
     html += "function release(){holding=false;activeDir=null;dirTouches={};if(timer){clearInterval(timer);timer=null;}sendStop();}";
-    html += "function holdDir(cmd){activeDir=cmd;if(cmd==='F')hold(speed,0);else if(cmd==='B')hold(-speed,0);";
+    html += "function holdDir(cmd){if(!engineOn)return;activeDir=cmd;if(cmd==='F')hold(speed,0);else if(cmd==='B')hold(-speed,0);";
     html += "else if(cmd==='L')hold(0,-speed);else if(cmd==='R')hold(0,speed);}";
-    html += "function setSpeed(n,btn){speed=n;var nodes=document.querySelectorAll('.speed-controls .speed');";
+    html += "function setSpeed(n,btn){if(!engineOn)return;speed=n;var nodes=document.querySelectorAll('.speed-controls .speed');";
     html += "for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i]===btn);setTapes(hv,hw);";
     html += "if(holding&&activeDir)holdDir(activeDir);else msg('spd='+speed);}";
     html += "function cmdFromEl(el){while(el&&el!==document.body){if(el.getAttribute&&el.getAttribute('data-cmd'))";
     html += "return el.getAttribute('data-cmd');el=el.parentElement;}return null;}";
     html += "function touchCmd(touch){return cmdFromEl(document.elementFromPoint(touch.clientX,touch.clientY));}";
-    html += "function applyCmd(cmd){if(!cmd)return;if(cmd==='S'){release();return;}holdDir(cmd);}";
+    html += "function applyCmd(cmd){if(!engineOn||!cmd)return;if(cmd==='S'){release();return;}holdDir(cmd);}";
     html += "function anyDirTouch(){for(var id in dirTouches){if(dirTouches[id]&&dirTouches[id]!=='S')return dirTouches[id];}return null;}";
-    html += "function onPadStart(e){ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
+    html += "function onPadStart(e){if(!engineOn)return;ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
     html += "for(var i=0;i<e.changedTouches.length;i++){var t=e.changedTouches[i],c=touchCmd(t);if(!c)continue;";
     html += "dirTouches[t.identifier]=c;applyCmd(c);}}";
     html += "function onPadEnd(e){ignoreMouseUntil=Date.now()+1500;e.preventDefault();";
@@ -756,20 +788,21 @@ void handleRoot() {
     html += "pad.addEventListener('touchstart',onPadStart,{passive:false,capture:true});";
     html += "pad.addEventListener('touchend',onPadEnd,{passive:false,capture:true});";
     html += "pad.addEventListener('touchcancel',onPadCancel,{passive:false,capture:true});";
-    html += "pad.addEventListener('mousedown',function(e){if(Date.now()<ignoreMouseUntil)return;";
+    html += "pad.addEventListener('mousedown',function(e){if(!engineOn||Date.now()<ignoreMouseUntil)return;";
     html += "var c=cmdFromEl(e.target);if(!c)return;e.preventDefault();mouseOn=true;applyCmd(c);});";
     html += "window.addEventListener('mouseup',function(){if(Date.now()<ignoreMouseUntil)return;if(!mouseOn)return;mouseOn=false;release();});";
-    html += "document.addEventListener('touchstart',function(e){for(var i=0;i<e.changedTouches.length;i++){";
+    html += "document.addEventListener('touchstart',function(e){if(!engineOn)return;for(var i=0;i<e.changedTouches.length;i++){";
     html += "var t=e.changedTouches[i],c=touchCmd(t);if(c==='S'){dirTouches[t.identifier]='S';release();e.preventDefault();}";
     html += "}},{passive:false,capture:true});";
     html += "document.getElementById('speedPad').addEventListener('click',function(e){";
-    html += "var b=e.target.closest('.speed');if(!b)return;setSpeed(parseInt(b.getAttribute('data-speed'),10),b);});";
+    html += "var b=e.target.closest('.speed');if(!b||b.disabled)return;setSpeed(parseInt(b.getAttribute('data-speed'),10),b);});";
+    html += "document.getElementById('engineBtn').onclick=function(){setEngine(!engineOn);};";
     html += "document.getElementById('simLowBat').onclick=function(){warn(true,'LOW BAT');};";
     html += "document.getElementById('simOffline').onclick=function(){warn(true,'OFFLINE');";
     html += "var b=document.getElementById('linkBadge');if(b){b.textContent='OFFLINE';b.className='badge warn';}};";
     html += "document.getElementById('simClear').onclick=function(){warn(false);";
     html += "var b=document.getElementById('linkBadge');if(b){b.textContent='LINK';b.className='badge ok';}};";
-    html += "setTapes(0,0);";
+    html += "setTapes(0,0);setEngine(false);";
     html += "</script></body></html>";
     sendText(200, "text/html", html);
 }
