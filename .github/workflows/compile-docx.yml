@@ -1,0 +1,40 @@
+name: Compile Markdown to Word (.docx)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md' # Trigger only when Markdown files are modified
+
+permissions:
+  contents: write # Allow Actions to commit the compiled docx back to repository
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Convert Files
+        run: |
+          # Find all md files and convert to docx (excluding README and system files)
+          find . -name "*.md" ! -name "README.md" ! -path "*/.github/*" ! -path "*/node_modules/*" | while read -r file; do
+            filename="${file%.*}"
+            pandoc "$file" -o "${filename}.docx"
+            echo "Compiled $file to ${filename}.docx"
+          done
+
+      - name: Commit and Push Updated Word Files
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add *.docx
+          # Commit only if there are changes to avoid workflow errors
+          git diff --quiet --cached || (git commit -m "Auto-compiled Word documents [skip ci]" && git push)
