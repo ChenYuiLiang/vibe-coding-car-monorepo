@@ -16,6 +16,7 @@ ychen@mail.shu.edu.tw
 
 **陳俞廷 (Yu-Ting Chen)**  
 朝陽科技大學幼兒保育系  
+abc100308@gmail.com  
 
 *2026 年 8 月*
 
