@@ -12,7 +12,7 @@ ychen@mail.shu.edu.tw
 
 **林瑞昱 (Rui-Yu Lin) (通訊作者)**  
 世新大學資訊管理學系  
-[請在此填寫林瑞昱的 Email，例如：rylin@mail.shu.edu.tw]  
+linroy1202a@gmail.com  
 
 **陳俞廷 (Yu-Ting Chen)**  
 朝陽科技大學幼兒保育系  
