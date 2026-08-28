@@ -47,7 +47,7 @@ Tutor 鷹架支持下有效參與；（二）有效的 Vibe Coding
 課程需要明確的結構性支撐與雙層輔導制度（Tutor→學員），而非放任學習者在無引導的情境下「自由
 vibe」；（三）建構主義、鷹架理論與專題導向學習等既有教育理論仍能有效為
 Vibe Coding 教學框架提供理論依據，且雙層 Tutor
-制與線上自學平台的組合特別有助於跨齡學習社群的形成。本研究的貢獻在於提出一個適用於
+制與線上自學平台的組合特別有助於跨齡學習社群的形成。當課程銜接物聯網遙控專題時，教材亦區分 Classroom 沙盒單元與車載 Wi‑Fi 產品遙控路徑，避免將選用通訊 Lab 誤解為日常開車前置條件。本研究的貢獻在於提出一個適用於
 K-9 零基礎學員的 Vibe Coding 課程設計框架。
 
 **關鍵詞：**Vibe Coding；AI 輔助程式教學；提示工程；課程設計；Vibe
@@ -84,7 +84,7 @@ require explicit structural scaffolding and a two-tier Tutor--student
 facilitation model; and (3) constructivism, scaffolding theory, and
 Project-Based Learning remain effective theoretical foundations, with
 the two-tier Tutor model and online self-study platform particularly
-conducive to cross-age learning communities. The contribution of this
+conducive to cross-age learning communities. When the curriculum connects to IoT remote-control projects, course materials distinguish Classroom sandbox units from the vehicle-hosted Wi‑Fi product remote path, so optional communication labs are not mistaken for prerequisites for day-to-day driving. The contribution of this
 study is a theoretically grounded and practically actionable curriculum
 design framework for Vibe Coding instruction in K-9 zero-background
 learner contexts.
@@ -379,17 +379,20 @@ Classroom** 是整條學習路徑的主軸：作業由平台派發至學員獨�
 輔助完成修改後推送，GitHub Actions
 自動評分以紅燈／綠燈回饋功能正確性；Tutor
 則透過平台掌握進度並介入輔導。課程共設計多個獨立模組，涵蓋從基礎開發環境設置（編輯器、GitHub
-身分設定）到進階互動（觸控事件、Canvas、非同步流程，以及視單元需要的
-Web API）的完整學習路徑——評量與社群學習始終發生在 Vibe Classroom
-所串起的作業—提交—回饋循環之中。
+身分設定）到進階互動（觸控事件、面板狀態、非同步流程，以及視單元需要的
+Canvas／Web API 等選用能力）的完整學習路徑——評量與社群學習始終發生在 Vibe Classroom
+所串起的作業—提交—回饋循環之中；實車聯調時則另以車載遙控頁作為產品完成定義。
 
-課程的技術棧包含：HTML5 Canvas
-圖形渲染（requestAnimationFrame、座標系統、三角函數）、CSS Grid 3×3
-十字鍵佈局（grid-template-areas、aspect-ratio）、JavaScript
+課程的技術棧包含：CSS Grid／Flex 十字鍵佈局（grid-template-areas、aspect-ratio）、JavaScript
 觸控事件（touchstart/touchmove/touchend、preventDefault、Ghost Click
-防禦）、setInterval 指令流管理、Dead Man\'s Switch 失效安全機制、JSON
-封包設計（Packet Slimming）、TypedArray 與 DataView 二進制資料封裝，以及
-Web Bluetooth API GATT 通訊（BLE 裝置搜尋、授權、狀態機）。對於 K-9
+防禦）、setInterval 指令流管理、Dead Man\'s Switch 失效安全機制，以及視單元而定的
+JSON 封包設計（Packet Slimming）、TypedArray／DataView、HTML5 Canvas
+虛擬搖桿、Web Bluetooth API GATT 通訊等。課程文件並區分兩層路徑：
+
+- **產品主線**：對齊車載 Wi‑Fi 遙控頁（觸控 D-pad、狀態面板、HTTP 駕駛語意），使學習者最終能在真實手機開車；  
+- **Classroom 沙盒／選用 Lab**：JSON 偵錯、Canvas 搖桿、Web Bluetooth 等本機作業，練觀念與自動測，**不要求介面等於車頁**，亦非日常遙控的預設通道。
+
+對於 K-9
 零基礎學員而言，這些技術本身並非學習的終點，而是在 Vibe Coding
 模式下體驗「描述需求→AI 生成→測試驗證→迭代修正」的完整創作循環的載體。
 
@@ -485,7 +488,7 @@ identity）------學習者開始以「具備 GitHub
 帳號的開發者」而非「學生」的角色定位自身。這種身份轉換在心理層面上為後續的
 Vibe Coding 協作學習奠定基礎。
 
-**2. 第二階段：Web 前端基礎與行動端設計**
+**2. 第二階段：Web 前端基礎與行動端設計（產品主線）**
 
 涵蓋 HTML5 語義化標籤、CSS Flexbox 與 Grid
 排版、觸控事件生命週期（touchstart、touchmove、touchend）與行動端防禦性程式設計（preventDefault、Ghost
@@ -494,26 +497,26 @@ Click 防禦、Dead Man\'s Switch
 UX
 問題（如 iOS 300ms 點擊延遲、touchstart 與 mousedown 的衝突、Fitts\' Law
 觸控熱區設計）中學習技術概念，而非在脫離情境的語法練習中。成品需在
-Vibe Classroom 通過自動測試，並能以截圖或示範證明於手機瀏覽器可用。
+Vibe Classroom 通過自動測試，並能以截圖或示範證明於手機瀏覽器可用；若進入實車聯調，則對齊車載頁之 D-pad／觸控手感。
 
 CSS Grid 3×3
 十字鍵控制面板是這一階段的代表性設計。學習者需實作一個在手機直向（Portrait）與橫向（Landscape）模式下均不變形的面板，具備啟用／停用的動態狀態、物理按壓下沉感（translateY +
 inset shadow）以及多層次 z-index
-疊加效果。這些設計挑戰在工業界的行動端 Web 開發中具有高度的真實性。
+疊加效果。這些設計挑戰在工業界的行動端 Web 開發中具有高度的真實性，並與產品遙控頁的 ENGINE／方向鍵狀態設計相呼應。
 
-**3. 第三階段：資料處理與進階互動**
+**3. 第三階段：資料格式、選用通道與進階互動（沙盒／Lab）**
 
-涵蓋 JSON 資料設計與精簡、TypedArray／DataView
-等二進位資料概念、HTML5 Canvas
-圖形渲染（虛擬搖桿的座標系統、Math.atan2 方向計算、requestAnimationFrame
-動畫循環），以及視單元需要而引入的瀏覽器進階 API（例如裝置連線相關
-Web API）之搜尋、授權與資料讀寫概念。
+涵蓋 JSON 資料設計與精簡（對照產品短參數駕駛，而非宣稱車頁必送 JSON 字串）、TypedArray／DataView
+等二進位資料概念（對應選用 BLE 通道）、HTML5 Canvas
+圖形渲染（虛擬搖桿 Lab；現行產品遙控為 D-pad），以及視單元需要而引入的瀏覽器進階 API（例如 Web Bluetooth）之搜尋、授權與資料讀寫概念。
 
 這一階段涉及較廣的跨模組整合，也最能體現 Vibe Coding
 的教育優勢------學習者可以透過 AI
 快速建立對陌生 API 與資料格式的初步理解，再將精力集中在關鍵細節與
 Vibe Classroom
-測試回饋上的深度學習。跨瀏覽器支援差異（部分 API 僅在特定瀏覽器可用）亦迫使學習者理解平台限制，這是真實前端工程每天面對的問題。
+測試回饋上的深度學習。教學上應標明：**Classroom 綠燈證明沙盒能力；能開車仍以車載 Wi‑Fi 頁＋實車運動為準**。跨瀏覽器支援差異（部分 API 僅在特定瀏覽器可用）亦迫使學習者理解平台限制，這是真實前端工程每天面對的問題。
+
+建議修課敘事採「產品主線優先、Lab 成塊後置」：先完成第二階段觸控／面板，再進入本階段之 BLE／JSON／Canvas，避免誤解為必須先精通 Web Bluetooth 才能遙控實車。以 **Car Starter** 為例，單元已依學習階段重編為 **S01–S15**（殼 S01–S03 → 觸控 S04–S07 → 面板／流程 S08–S09 → 封包對照 S10 → BLE Lab S11–S13 → 搖桿 Lab S14–S15）；Classroom 的 repo 技能名可維持不變，教學敘事則以修課序為準。
 
 **4. 第四階段：Vibe Coding 工作流整合**
 
@@ -562,10 +565,11 @@ SPEC.md 與 AUDIT.md 正是這種後設認知的文字化載體。這一設計�
 **1. 技術多樣性帶來的認知負荷**
 
 課程涵蓋的技術棧廣度------例如版面配置、觸控事件、Canvas、非同步流程，以及部分單元涉及的
-Web API------對學習者和教學者均構成相當的認知負荷。AUDIT.md
+Web API------對學習者和教學者均構成相當的認知負荷。若未區分**產品主線**與**選用 Lab**，學習者更容易把 BLE／Canvas／JSON
+沙盒當成「必須先全部學會才能開車」的線性障礙。AUDIT.md
 與 Vibe Classroom
 上的失敗提交顯示，學習者常在瀏覽器差異、權限對話或非同步狀態上投入大量調試時間；這雖然接近真實開發情境，但對初學者可能造成挫折感，進而降低學習動機。如何在真實複雜度與學習可行性之間取得平衡，並善用
-Tutor 與平台回饋分擔負荷，是這類課程持續面對的核心挑戰。
+Tutor、平台回饋與「先車頁、後 Lab」的修課地圖分擔負荷，是這類課程持續面對的核心挑戰。
 
 **2. AI 依賴與深度理解的張力**
 
@@ -683,7 +687,7 @@ Rook（2026）對領域專業知識不可或缺性的強調。新增的能力要
 第三，回應 RQ3（相關教育理論的適用性）：建構主義（AI 與 Tutor 作為
 MKO）、鷹架理論（漸進式支援退出）與
 PBL（真實專題與平台驗收作為驅動性問題）三個理論框架，均能有效為 PACE
-框架提供理論依據，且三者之間具有良好的互補性。
+框架提供理論依據，且三者之間具有良好的互補性。補充實務發現：當課程技術棧同時涵蓋產品遙控與通訊 Lab 時，必須在教材中標明 **Classroom 沙盒驗收** 與 **車載 Wi‑Fi 產品路徑** 的差異，並採「主線先、Lab 後」的修課敘事，以免學習者將選用通道（如 Web Bluetooth）誤認為開車前置條件。
 
 本研究的理論與實踐貢獻在於：以 **Vibe Classroom**
 為課程運行與評量的核心載體，提出兼具理論根據（建構主義、鷹架理論、PBL）與實踐操作性（PACE

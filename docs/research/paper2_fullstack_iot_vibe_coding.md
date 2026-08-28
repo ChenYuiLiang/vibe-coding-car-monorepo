@@ -18,15 +18,15 @@ linroy1202a@gmail.com
 朝陽科技大學幼兒保育系  
 abc100308@gmail.com  
 
-*2026 年 8 月*
+*2026 年 8 月（文稿對齊：產品遙控＝車載 Wi‑Fi 頁；BLE／沙盒＝選用 Lab）*
 
 ---
 
 ## 摘要
 
-大型語言模型（LLM）驅動的 **Vibe Coding** 使學習者得以用自然語言產生與修改程式碼，但在物聯網（IoT）課程中，僅「產生看起來正確的程式」並不足以達成教學目標。手機遙控器（Web／Web Bluetooth／Wi-Fi HTTP）與 ESP32 韌體（PlatformIO／C++）分屬異構技術棧，若缺少共享約束與實機閉環，AI 產出常出現協定不一致、可編譯卻無法上板、或上板後無法遙測與遙控等問題，導致「實作完成」與「測試通過」脫節。
+大型語言模型（LLM）驅動的 **Vibe Coding** 使學習者得以用自然語言產生與修改程式碼，但在物聯網（IoT）課程中，僅「產生看起來正確的程式」並不足以達成教學目標。手機遙控器與 ESP32 韌體（PlatformIO／C++）分屬異構技術棧：產品日常遙控以 **車載 Wi‑Fi HTTP 頁**（D-pad 與駕駛 API）為主，**Web Bluetooth** 為選用通道；若缺少共享約束與實機閉環，AI 產出常出現協定不一致、可編譯卻無法上板、或上板後無法遙測與遙控等問題，導致「實作完成」與「測試通過」脫節。
 
-本研究以 Taiwan Vibe Coding Co. 推動之 **無人車入門課程**（前端遙控與人機互動）與 **無人車基礎課程**（ESP32 韌體、網路與驅動）之教學實務為主要來源，論證 Vibe Coding 若要有效服務於「產生／修改手機遙控器與 ESP32 韌體，並達成實作與測試目的」，必須同時具備三層結構：（一）以 **Monorepo** 組織雙端程式，並以 **共享協定套件** 將 BLE UUID、二進位封包與 OTA 標頭規則固定為單一真相來源，降低雙端幻覺；（二）**可驗證的執行路徑**——Web 端以本機開發伺服器與單元測試即時回饋，韌體端以 PlatformIO 建置、USB 首次燒錄與後續 **OTA** 形成「改碼→部署→觀察」循環；（三）**Hardware-in-the-Loop（HIL）雙端驗收**，以手機畫面、車端 HTTP／BLE 狀態、串口或狀態 API、以及實體動作共同判定是否達成學習目標，而非僅依賴模擬器或靜態程式碼審查。
+本研究以 Taiwan Vibe Coding Co. 推動之 **無人車入門課程**（前端遙控與人機互動）與 **無人車基礎課程**（ESP32 韌體、網路與驅動）之教學實務為主要來源，論證 Vibe Coding 若要有效服務於「產生／修改手機遙控器與 ESP32 韌體，並達成實作與測試目的」，必須同時具備三層結構：（一）以 **Monorepo** 組織雙端程式，並以 **共享協定套件** 將 HTTP 駕駛語意、BLE UUID／二進位封包與 OTA 標頭規則固定為單一真相來源，降低雙端幻覺；（二）**可驗證的執行路徑**——Web 端以本機開發伺服器與單元測試即時回饋，韌體端以 PlatformIO 建置、USB 首次燒錄與後續 **OTA** 形成「改碼→部署→觀察」循環；（三）**Hardware-in-the-Loop（HIL）雙端驗收**，以車載頁畫面、車端 HTTP 狀態／駕駛回應、（選用）BLE 狀態、串口或狀態 API、以及實體動作共同判定是否達成學習目標，而非僅依賴模擬器或靜態程式碼審查。
 
 研究進一步整理兩條課程在實機場域反覆出現的工程約束（如 SoftAP／STA 自癒、OTA 雙槽與延遲確認、Watchdog 急停、USB 救援時開機載入必要映像），說明這些約束如何被寫入課程操作手冊，使學員與 AI 代理在「改遙控器／改韌體」時仍能對齊可測試的完成定義。結論指出：Vibe Coding 在全棧 IoT 中的教育價值，不在於省略工程，而在於把提示、審計、部署與實機證據串成閉環；缺任一環，則「產生程式」無法穩定轉化為「實作與測試成功」。
 
@@ -36,9 +36,9 @@ abc100308@gmail.com
 
 ## Abstract
 
-Vibe Coding—natural-language–driven code generation with large language models (LLMs)—lowers syntax barriers, yet in Internet of Things (IoT) education, producing plausible code is insufficient for learning goals. Mobile controllers (Web / Web Bluetooth / Wi-Fi HTTP) and ESP32 firmware (PlatformIO / C++) inhabit heterogeneous stacks. Without shared constraints and a hardware-backed closed loop, AI outputs frequently exhibit protocol drift, “builds but does not run,” or “runs but cannot be remotely tested,” decoupling *implementation* from *verification*.
+Vibe Coding—natural-language–driven code generation with large language models (LLMs)—lowers syntax barriers, yet in Internet of Things (IoT) education, producing plausible code is insufficient for learning goals. Mobile controllers and ESP32 firmware (PlatformIO / C++) inhabit heterogeneous stacks: day-to-day driving uses the **vehicle-hosted Wi‑Fi HTTP page** (D-pad and drive APIs), while **Web Bluetooth** is an optional channel. Without shared constraints and a hardware-backed closed loop, AI outputs frequently exhibit protocol drift, “builds but does not run,” or “runs but cannot be remotely tested,” decoupling *implementation* from *verification*.
 
-Drawing primarily on Taiwan Vibe Coding Co.’s **Entry-level Autonomous Car Course** (mobile remote control and human–computer interaction) and **Basic Autonomous Car Course** (ESP32 firmware, networking, and actuation), this paper argues that Vibe Coding can reliably support *generating and modifying* both the mobile controller and ESP32 firmware for implementation-and-testing purposes only when three layers coexist: (1) a **monorepo** organizing both ends with a **shared protocol package** as the single source of truth for BLE UUIDs, binary packets, and OTA header rules; (2) **verifiable execution paths**—instant Web feedback via a local development server and unit tests, plus firmware build, first-time USB flashing, and subsequent **OTA** for a change–deploy–observe cycle; and (3) **Hardware-in-the-Loop (HIL) dual-end acceptance**, judging success by mobile UI evidence, vehicle HTTP/BLE status, serial or status APIs, and physical motion—not simulation alone.
+Drawing primarily on Taiwan Vibe Coding Co.’s **Entry-level Autonomous Car Course** (mobile remote control and human–computer interaction) and **Basic Autonomous Car Course** (ESP32 firmware, networking, and actuation), this paper argues that Vibe Coding can reliably support *generating and modifying* both the mobile controller and ESP32 firmware for implementation-and-testing purposes only when three layers coexist: (1) a **monorepo** organizing both ends with a **shared protocol package** as the single source of truth for HTTP drive semantics, BLE UUIDs/binary packets, and OTA header rules; (2) **verifiable execution paths**—instant Web feedback via a local development server and unit tests, plus firmware build, first-time USB flashing, and subsequent **OTA** for a change–deploy–observe cycle; and (3) **Hardware-in-the-Loop (HIL) dual-end acceptance**, judging success primarily by the car page UI, vehicle HTTP status/drive response, optional BLE status, serial or status APIs, and physical motion—not simulation alone.
 
 We further document recurring engineering constraints from classroom practice (SoftAP↔STA self-healing, OTA dual slots with deferred validation, watchdog failsafes, and USB rescue requiring the correct bootloader chain) and show how course handbooks operationalize a testable definition of done for learners and AI agents. We conclude that the educational value of Vibe Coding in full-stack IoT is not the elimination of engineering rigor, but the coupling of prompting, auditing, deployment, and hardware evidence into a closed loop.
 
@@ -54,8 +54,8 @@ We further document recurring engineering constraints from classroom practice (S
 
 Taiwan Vibe Coding Co. 之無人車系列課程，將此典範延伸到 **物聯網軟硬體整合** 現場，並以兩條主軸分工：
 
-1. **無人車入門課程**：培養手機端遙控能力——瀏覽器 Web App、觸控 UI、Web Bluetooth、Wi-Fi HTTP 遙控與人機互動；  
-2. **無人車基礎課程**：培養車端韌體能力——ESP32 GPIO／PWM、BLE GATT、SoftAP／STA、OTA、安全急停與驅動整合。  
+1. **無人車入門課程**：培養手機端遙控能力——瀏覽器 Web App、觸控 UI、**車載 Wi‑Fi HTTP 遙控（產品主線）**，以及 Web Bluetooth 等選用通道與人機互動；  
+2. **無人車基礎課程**：培養車端韌體能力——ESP32 GPIO／PWM、SoftAP／STA、HTTP 駕駛 API、OTA、安全急停與驅動整合，並以 BLE GATT 為第二通訊通道。  
 
 「能產生程式」與「能完成實作並通過測試」之間仍常出現結構性落差。瀏覽器可即時預覽 UI，但無法完整模擬射頻、供電不穩、分區表或實體馬達行為；韌體可在工具鏈中編譯，卻仍可能在實機上無熱點、無藍牙、或 OTA 後無法再連線。若課程僅鼓勵學員「對 AI 說出需求並貼上程式」，容易形成假性完成：作業倉庫有碼、截圖有 UI，但雙端無法互通，或無法在真實硬體上重複驗證。
 
@@ -94,7 +94,7 @@ Vibe Coding 強調以自然語言驅動程式生成（Karpathy, 2025）。既有
 
 ### （二）全棧 IoT 的雙重複雜度
 
-IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控、非同步 BLE／HTTP 與瀏覽器安全限制（例如 Web Bluetooth 對 HTTPS／localhost 的要求）；韌體端關注腳位、電源、無線共存、分區與 OTA 可靠性（Espressif, 2025）。LLM 若分別在兩端「各自成功生成」，仍可能因 UUID、封包端序、校驗或狀態機不一致而整體失敗——此即跨領域 **protocol hallucination／協定幻覺**。
+IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控、非同步 HTTP（及選用的 BLE）與瀏覽器安全限制（例如 Web Bluetooth 對 HTTPS／localhost 的要求；行動 Safari 更適合走車載 HTTP 頁）；韌體端關注腳位、電源、無線共存、分區與 OTA 可靠性（Espressif, 2025）。LLM 若分別在兩端「各自成功生成」，仍可能因 URL 參數語意、UUID、封包端序、校驗或狀態機不一致而整體失敗——此即跨領域 **protocol hallucination／協定幻覺**。
 
 ### （三）Hardware-in-the-Loop 作為教學驗收隱喻
 
@@ -112,7 +112,7 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 
 採 **設計導向的個案研究（design-based case study）** 與 **課程工件分析**：
 
-1. 分析無人車入門課程（遙控 Web 應用、觸控與 BLE／HTTP 連線）與無人車基礎課程（ESP32 韌體、Wi-Fi／BLE、OTA、驅動）之單元目標、作業規範與實機驗收要求；  
+1. 分析無人車入門課程（遙控 Web 應用、觸控、車載 HTTP 與選用 BLE）與無人車基礎課程（ESP32 韌體、Wi-Fi／HTTP、選用 BLE、OTA、驅動）之單元目標、作業規範與實機驗收要求；  
 2. 歸納兩條課程在整合階段共同依賴的「產生／修改→部署→實機驗證」標準作業程序（SOP）；  
 3. 以課堂與實驗室反覆出現的失效模式作為反例，檢驗閉環設計是否對症。
 
@@ -122,18 +122,20 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 
 | 課程 | 主要學習產出 | 技術焦點 |
 |------|----------------|----------|
-| **無人車入門課程** | 可在真實手機操作的遙控介面 | HTML／CSS／TypeScript、觸控、Web Bluetooth、HTTP 遙控、UI／UX |
-| **無人車基礎課程** | 可在 ESP32 實車上運行的韌體 | PlatformIO／C++、GPIO／PWM、BLE GATT、Wi-Fi AP／STA、OTA、安全狀態機 |
-| **整合驗收（Integration Lab）** | 雙端互通並完成 HIL 證據 | 共享協定、實機聯測、截圖與日誌 |
+| **無人車入門課程** | 可在真實手機操作的遙控介面 | HTML／CSS／TypeScript、觸控、**車載 HTTP 遙控（主）**、Web Bluetooth（選用）、UI／UX |
+| **無人車基礎課程** | 可在 ESP32 實車上運行的韌體 | PlatformIO／C++、GPIO／PWM、Wi-Fi AP／STA、HTTP API（主）、BLE GATT（選用）、OTA、安全狀態機 |
+| **整合驗收（Integration Lab）** | 雙端互通並完成 HIL 證據 | 優先車載頁＋HTTP 駕駛；共享協定、實機聯測、截圖與日誌 |
 
 為降低雙端協定漂移，課程實務上以 **Monorepo** 同時容納：
 
-- 手機／桌面遙控應用；  
+- 車載遙控頁（韌體內嵌）與連線入口／進階遙控應用；  
 - 共享通訊協定套件；  
 - ESP32 車端韌體專案；  
 - 操作手冊（配網、OTA、USB 救援、驗收規範）。  
 
-學習者可在同一工作區修改入門課程側的遙控器，或基礎課程側的韌體，再依板子狀態選擇 OTA 或 USB 完成部署。
+學習者可在同一工作區修改入門課程側的遙控器，或基礎課程側的韌體，再依板子狀態選擇 OTA 或 USB 完成部署。**Classroom 各單元作業**多為觀念沙盒（本機預覽驗收）；**能開車的產品路徑**以車載 Wi‑Fi 頁為準，不宜把沙盒 UI 或 BLE 連線誤當成日常遙控完成定義。
+
+入門（Car Starter）單元已依學習階段重編為 **S01–S15**（殼→觸控→面板／流程→封包對照→BLE Lab→搖桿 Lab）。基礎（Car Basic）**B01–B30 編號暫不重編**，但建議聯調序為環境／IO／PWM → **Wi‑Fi／HTTP** →（選用）BLE 與特殊 sketch；且多數 Basic 作業為**獨立 PlatformIO 映像**，上傳後常覆蓋艦隊韌體，**不能**視為「全數可在艦隊 firmware 上直接驗收」。AsyncWebServer、雙核 pin 任務、OTA Basic Auth 等刻意不進艦隊；產品 HIL 以 monorepo 艦隊映像為準，單元測完需 OTA／USB 燒回後再驗車頁。
 
 ---
 
@@ -151,8 +153,9 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 
 共享協定套件在概念上固定：
 
-- BLE Service／Characteristic UUID 與裝置廣播名稱慣例；  
-- 遙控封包格式（含校驗）；  
+- **HTTP 駕駛語意**（如 `v`／`w` 或等價參數、停止指令）——產品日常通道；  
+- BLE Service／Characteristic UUID 與裝置廣播名稱慣例——選用通道；  
+- 遙控二進位封包格式（含校驗）；  
 - 課程用簡易 opcode 指令（前進／後退／轉向／停止，以及必要時的清 Wi-Fi 等維運指令）；  
 - OTA 映像基本檢查（合法映像標頭、目標晶片、大小上限）。
 
@@ -160,25 +163,26 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 
 ### （三）無人車入門：手機遙控器作為可即時測試的前端
 
-入門課程之遙控應用典型提供：
+入門課程之遙控能力分層如下：
 
-- **Web BLE** 模式：掃描／連線車端 GATT，送二進位指令；  
-- **Wi-Fi HTTP** 模式：對車端狀態與駕駛 API 握手與遙控；  
-- **OTA 上傳前檢查**（若課程開放學員升級車端）：先驗證映像標頭再傳輸，減少誤刷。
+- **產品主線——車載 Wi‑Fi HTTP 頁**：手機連 SoftAP／STA 後開啟車內嵌遙控（D-pad），以駕駛 API（如 `/api/drive`）送出指令；Safari 等行動瀏覽器可穩定使用。  
+- **連線入口／進階應用**（Monorepo Web Controller）：協助尋車、跳轉車頁，並提供進階 BLE／OTA 工具。  
+- **選用通道——Web BLE**：掃描／連線車端 GATT，送二進位指令（需相容瀏覽器與 HTTPS／localhost）。  
+- **Classroom 沙盒單元**：JSON 封包、Canvas 搖桿等本機作業，練觀念與自動測；**不要求等於車頁實作**，亦不取代「能開車」的 HIL 驗收。
 
-前端的「實作」對應本機開發與預覽；「測試」至少包含單元測試（協定／連線邏輯）與實機連線證據。課程文件須寫明瀏覽器限制（例如部分行動瀏覽器對 Web Bluetooth 支援不足），並允許以專業 BLE 掃描工具作為裝置存活之輔助證明。
+前端的「實作」對應本機開發與預覽；「測試」至少包含單元測試（協定／連線邏輯）與實機連線證據。課程文件須寫明：日常開車優先驗車載 HTTP；Web Bluetooth 有瀏覽器限制，並允許以專業 BLE 掃描工具作為裝置存活之輔助證明。
 
 ### （四）無人車基礎：ESP32 韌體作為必須上板才算數的後端
 
 基礎課程之車端韌體將能力收斂為可實車部署的映像，常見包括：
 
 - SoftAP 配網與 STA 自癒；  
-- BLE 廣播與指令執行；  
-- HTTP 狀態／駕駛 API；  
+- **HTTP 狀態／駕駛 API**（產品遙控依賴）；  
+- BLE 廣播與指令執行（選用通道）；  
 - OTA 與延遲確認（降低壞映像鎖死）；  
 - 馬達 PWM、狀態機與 Watchdog 急停。
 
-韌體的「實作」意味著：建置成功 **且** 部署到板子 **且** 無線或有線介面可達。「測試」意味著：狀態可讀、指令有效、安全機制可觀察（例如逾時無指令後進入安全停止）。
+韌體的「實作」意味著：建置成功 **且** 部署到板子 **且** 無線或有線介面可達。「測試」意味著：狀態可讀、指令有效、安全機制可觀察（例如逾時無指令後進入安全停止）。教學順序上，聯調應優先驗證 Wi‑Fi／HTTP 可達與車頁遙控，再視需要練習 BLE。
 
 ---
 
@@ -206,28 +210,28 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
              │                       ├─ 首次／全滅：USB 救援
              │                       └─ 已有 HTTP：OTA
              ▼                       ▼
-      手機遙控 UI  ◄──── BLE / Wi-Fi ────► ESP32 實機行為
+      手機遙控 UI  ◄── Wi‑Fi HTTP（主）／BLE（選） ──► ESP32 實機行為
              │                       │
              └──────── HIL 證據 ◄────┘
-        (畫面、狀態 API、BLE、運動、日誌)
+        (車載頁、狀態 API、運動；選用 BLE／日誌)
 ```
 
 若任一箭頭斷裂——例如只改碼不部署、只部署不取證、或兩端不對照協定——則 Vibe Coding 停留在「文字產出」，無法宣稱達成實作與測試。
 
 ### （二）在無人車入門課程中產生／修改手機遙控器
 
-**典型提示目標（Prompt）**：新增連線模式、修正封包編碼、改善觸控與心跳、對接狀態欄位。
+**典型提示目標（Prompt）**：改善車載頁觸控與心跳、對接狀態欄位、修正 HTTP 駕駛參數；進階時可新增 BLE 模式或 Classroom 沙盒功能。
 
 **Audit 清單（教學上應強制）**：
 
-1. 是否遵循共享協定的 UUID 與封包編碼？  
+1. 產品路徑是否仍以車載 HTTP 駕駛語意為準（而非誤把沙盒 JSON／Canvas 當成唯一遙控）？  
 2. Wi-Fi 模式是否指向真實可達的車端位址（而非在已連上家用網路時仍假設熱點位址）？  
-3. 是否理解系統藍牙清單不一定顯示 BLE 週邊，需使用支援 Web Bluetooth 的瀏覽器或掃描工具？  
+3. 若使用 BLE：是否遵循共享協定的 UUID 與封包編碼，並理解需支援 Web Bluetooth 的瀏覽器或掃描工具？  
 
-**實作**：安裝依賴 → 啟動開發伺服器 → 以瀏覽器／手機操作。  
-**測試證據**：單元測試通過；實機顯示已連線；指令後車端狀態或運動變化。
+**實作**：安裝依賴 → 啟動開發伺服器或開啟車載頁 → 以瀏覽器／手機操作。  
+**測試證據**：單元測試通過；**車載頁**可 ENGINE／方向鍵操作；指令後車端狀態或運動變化。沙盒作業另以 Classroom 自動測／截圖驗收。
 
-此階段優勢是 **回饋週期短**；風險是學員誤以為「前端測完＝全系統測完」。
+此階段優勢是 **回饋週期短**；風險是學員誤以為「前端沙盒測完＝全系統測完」或「BLE 連上＝日常遙控完成」。
 
 ### （三）在無人車基礎課程中產生／修改 ESP32 韌體
 
@@ -247,7 +251,7 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 | 已有 HTTP（熱點或家用網路） | OTA 上傳課程指定之正式韌體映像 | 網頁或 CLI 上傳後重開驗證 |
 | 空板／三無（無熱點、無 STA、無 BLE） | USB 救援燒錄 | 必須寫入完整開機鏈與應用映像 |
 
-**測試證據**：狀態 API 之版本與連線角色；BLE 廣播；駕駛回應；必要時串口日誌。
+**測試證據**：狀態 API 之版本與連線角色；**HTTP 駕駛回應**；（選用）BLE 廣播；必要時串口日誌。
 
 此階段回饋週期較長、失敗代價較高。因此配網／OTA／USB 手冊應視為 **基礎課程教材的一部分**，而非選讀附錄。
 
@@ -257,11 +261,12 @@ IoT 教學同時涉及人機介面與嵌入式即時控制。Web 端關注觸控
 
 | 證據 | 對應測試問題 |
 |------|----------------|
-| 手機遙控畫面截圖 | 遙控 UI 是否在真實手機可用？ |
-| 連線成功畫面或狀態列 | HTTP 或 BLE 是否真正握手？ |
+| 車載遙控頁畫面截圖 | 產品 UI 是否在真實手機可用？ |
+| HTTP 連線／駕駛成功 | 是否對真實車端握手並送出 `drive`？ |
+| （選用）BLE 連線畫面 | 第二通道是否真正握手？ |
 | 串口日誌或狀態 API 輸出 | 韌體是否在跑？版本是否正確？ |
 | 硬體接線照片 | 是否依課程腳位完成實車組裝？ |
-| 實體運動觀察 | 封包是否驅動馬達（而不只是 UI 動畫）？ |
+| 實體運動觀察 | 指令是否驅動馬達（而不只是 UI 動畫）？ |
 
 評量若只看自動單元測試，會漏掉射頻、供電與人機操作問題；若只看照片不看協定測試，則可能放過「畫面有、車不動」。雙軌評量才對齊「實作與測試」雙目標。
 
@@ -294,7 +299,7 @@ OTA 使基礎課程的韌體迭代符合 Vibe Coding 的快速節奏。但可測
 
 ### （四）模擬加速學習，HIL 定義完成
 
-入門課程的本機預覽與單元測試提供快速迴圈；最終通關仍須真實手機與 ESP32。教學敘事應明確區分兩者，避免以模擬器截圖替代實車驗證。
+入門課程的 Classroom 沙盒、本機預覽與單元測試提供快速迴圈；最終通關仍須真實手機與 ESP32，且以 **車載 Wi‑Fi 頁能開車** 為預設完成定義。BLE／Canvas／JSON 等單元可作為選用 Lab 證據，但教學敘事應明確區分「沙盒通過」與「產品遙控通過」，避免以模擬器或沙盒截圖替代實車驗證。
 
 ### （五）文件即課程基礎設施
 
@@ -322,16 +327,19 @@ OTA 使基礎課程的韌體迭代符合 Vibe Coding 的快速節奏。但可測
 
 ### （二）給課程設計者的建議
 
-1. 入門與基礎作業皆應同時給定：要改的模組、要跑的步驟、要交的 HIL 證據。  
+1. 入門與基礎作業皆應同時給定：要改的模組、要跑的步驟、要交的 HIL 證據；並標明該單元屬**產品主線**或**選用 Lab**。  
 2. 將 OTA／USB 失敗模式寫入必讀手冊，並允許 AI 代理引用。  
 3. 評量規準區分前端、協定、部署、硬體四類缺陷，避免學員只優化截圖。  
-4. 明確教導「STA 健康時熱點關閉」為設計行為，減少錯誤排障。
+4. 明確教導「STA 健康時熱點關閉」為設計行為，減少錯誤排障。  
+5. 聯調與展示優先走車載 HTTP；BLE 作為第二通道，勿暗示「必先學會 BLE 才能開車」。  
+6. Basic 單元 sketch 與艦隊映像分開驗收；upload 單元後須燒回艦隊再做產品 HIL。
 
 ### （三）給學習者與 Vibe Coding 實踐者的建議
 
 1. 先問「如何測？」，再問「如何讓 AI 寫？」。  
-2. 改封包必同步入門遙控器與基礎韌體，並跑協議測試。  
+2. 改駕駛語意必同步入門遙控器與基礎韌體，並跑協議／實車測試。  
 3. 韌體迭代優先維持 HTTP 可達；全滅時接受 USB，不要假裝純無線永遠足夠。  
+4. Classroom 沙盒綠燈 ≠ 車已能遙控；通關以車頁＋運動為準。  
 
 ### （四）未來研究
 
@@ -354,11 +362,12 @@ OTA 使基礎課程的韌體迭代符合 Vibe Coding 的快速節奏。但可測
 
 | 學習目標 | 課程側 | Vibe Coding 焦點 | 實作動作 | 最低測試證據 |
 |----------|--------|------------------|----------|--------------|
-| 遙控 UI／連線 | 無人車入門 | 遙控應用原始碼 | 啟動開發伺服器並實機連線 | 畫面操作＋連線狀態 |
-| 封包語意 | 入門＋基礎 | 共享協定與雙端呼叫點 | 執行協定相關測試 | 測試通過＋實車回應 |
-| 韌體行為 | 無人車基礎 | 車端韌體原始碼 | 建置後 OTA 或 USB | 狀態 API、BLE、運動 |
+| 遙控 UI／連線 | 無人車入門 | 車載頁／遙控應用 | 開啟車頁或開發伺服器並實機連線 | 車頁操作＋HTTP 連線狀態 |
+| 封包／駕駛語意 | 入門＋基礎 | 共享協定與雙端呼叫點 | 執行協定相關測試 | 測試通過＋實車回應 |
+| 韌體行為 | 無人車基礎 | 車端韌體原始碼 | 建置後 OTA 或 USB | 狀態 API、HTTP 駕駛、運動 |
 | 無線升級 | 基礎（整合） | 正式韌體映像 | OTA 上傳並重開 | 版本更新且仍可連 |
-| 整合通關 | 入門×基礎 | 雙端聯測 | Integration／HIL | 證據組合＋實體動作 |
+| 選用 BLE Lab | 入門／基礎 | GATT／二進位封包 | 相容瀏覽器連線 | BLE 握手（非日常必測） |
+| 整合通關 | 入門×基礎 | 雙端聯測 | Integration／HIL | 車頁＋實體動作（優先） |
 
 ## 附錄 B：給 AI Agent 的最短系統約束（可貼入課程）
 
@@ -366,8 +375,9 @@ OTA 使基礎課程的韌體迭代符合 Vibe Coding 的快速節奏。但可測
 2. USB 全擦後必須寫入完整開機鏈（含應用啟動必要映像），否則可能顯示燒錄成功卻無 App。  
 3. 熱點配網與家用網路模式切換屬設計行為；已連上家用網路時熱點關閉可視為正常。  
 4. 新韌體勿在開機極早期即宣告 OTA 成功有效，以免壞映像無法回滾。  
-5. 驗收以實機 HTTP／BLE／運動為準，不以「程式看起來正確」為準。  
+5. 驗收以實機 **HTTP 車頁／運動**為準（BLE 為選用證據），不以「程式看起來正確」或「僅沙盒通過」為準。  
 6. 不要承諾「保證永遠不再需要 USB」。  
+7. 勿將 Classroom 單元順序誤解為必須先 BLE 後才能 Wi‑Fi 開車。  
 
 ---
 

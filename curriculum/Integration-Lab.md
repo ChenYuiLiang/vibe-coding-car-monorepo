@@ -13,24 +13,36 @@
 > - USB 救援：必須含 **`boot_app0 @ 0xe000`**
 > - **完整手冊**：[docs/FIRMWARE-PLAYBOOK.md](../docs/FIRMWARE-PLAYBOOK.md)
 > - **Clone 後手機怎麼連車／找 STA IP**：[apps/web-controller/README.md](../apps/web-controller/README.md)（連線入口）＋ 根目錄 [README.md](../README.md)「手機怎麼連到車」
+>
+> **畫面參考：** [連線入口](../docs/assets/guide-connect-launcher.png) · [車載遙控頁](../docs/assets/guide-connect-car-page.png)
+
+### 先開哪一條？（產品優先）
+
+| 優先 | 通道 | 怎麼開 | 說明 |
+|---|---|---|---|
+| **1（日常）** | **Wi‑Fi 車載頁** | SoftAP `http://192.168.4.1` 或 STA `http://<車IP>/` | D-pad + `GET /api/drive?v=&w=`；Safari 可用 |
+| **2（選用）** | **BLE GATT** | Chrome + Web Bluetooth／課程沙盒 | 二進位 `[0xFF, v+128, w+128, checksum]`；非預設遙控 |
+
+Starter 編號＝修課序（S01→S15）；對照舊碼見 [STARTER-NUMBERING.md](./STARTER-NUMBERING.md)、[starter/README.md](./starter/README.md)。  
+Basic **B 編號不重編**；建議聯調序（Wi‑Fi 先於 BLE、單元 sketch vs 艦隊）見 [BASIC-NUMBERING.md](./BASIC-NUMBERING.md)。Classroom 作業多為沙盒／獨立燒錄；**能開車的驗收以車載頁為準**。
 
 ---
 
 ## 📡 一、 系統連線拓樸架構
 
-系統支援兩大雙向實時通訊管道：
+系統支援兩大通訊管道；**產品預設走管道 A**：
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │                   手機 (Mobile Web UI)                    │
-│      - HTML5 Canvas 搖桿 / Flexbox 十字鍵                 │
-│      - Web Bluetooth API / Fetch API                     │
+│   【預設】車載頁 D-pad + Fetch /api/drive                  │
+│   【選用】Web Bluetooth；【Lab】Canvas 搖桿（非車頁）      │
 └────────────────────────────┬─────────────────────────────┘
                              │
             ┌────────────────┴────────────────┐
             ▼                                 ▼
-   【管道 A】Wi-Fi AP/STA 模式          【管道 B】BLE GATT 服務
-   - SoftAP 192.168.4.1（開放熱點）   - Service UUID: 4fafc201...
+   【管道 A｜日常】Wi-Fi                【管道 B｜選用】BLE GATT
+   - SoftAP 192.168.4.1 / STA IP       - Service UUID: 4fafc201...
    - HTTP 控制 + Web OTA               - Characteristic: beb5483e...
             │                                 │
             └────────────────┬────────────────┘

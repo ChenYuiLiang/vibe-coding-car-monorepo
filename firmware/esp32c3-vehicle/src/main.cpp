@@ -14,7 +14,7 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define FW_VERSION                "1.4.1-s07align"
+#define FW_VERSION                "1.4.3-s10lock"
 #define CURRICULUM_PROFILE        "integration-lab+wifi+ble+ota+http-v1"
 #define ESP32_MAGIC_BYTE          0xE9
 #define TARGET_CHIP_ESP32C3       0x05
@@ -596,7 +596,9 @@ void handleRoot() {
             "html,body{margin:0;height:100%;}"
             "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f8fafc;"
             "overflow:hidden;overscroll-behavior:none;background:#070b14;"
-            "padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}"
+            "padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);"
+            "-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}"
+            "input,textarea,select{ -webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}"
             ".glow{position:fixed;inset:0;z-index:0;pointer-events:none;"
             "background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(56,189,248,.18),transparent),"
             "radial-gradient(ellipse 50% 35% at 90% 80%,rgba(99,102,241,.16),transparent);}"
@@ -764,7 +766,11 @@ void handleRoot() {
     html += "msg(engineOn?'STOP · spd='+speed:'Start engine to drive');}";
     html += "function hold(v,w){if(!engineOn)return;holding=true;hv=v;hw=w;sendDrive(v,w);if(timer)clearInterval(timer);";
     html += "timer=setInterval(function(){if(holding)sendDrive(hv,hw);},220);}";
-    html += "function release(){holding=false;activeDir=null;dirTouches={};if(timer){clearInterval(timer);timer=null;}sendStop();}";
+    html += "function release(){holding=false;activeDir=null;dirTouches={};mouseOn=false;";
+    html += "if(timer){clearInterval(timer);timer=null;}sendStop();}";
+    html += "function failsafeStop(reason){var was=holding||mouseOn||!!anyDirTouch();";
+    html += "release();if(!engineOn&&!was)return;warn(true,reason||'FAILSAFE');";
+    html += "msg((reason||'FAILSAFE')+' · STOP');}";
     html += "function holdDir(cmd){if(!engineOn)return;activeDir=cmd;if(cmd==='F')hold(speed,0);else if(cmd==='B')hold(-speed,0);";
     html += "else if(cmd==='L')hold(0,-speed);else if(cmd==='R')hold(0,speed);}";
     html += "function setSpeed(n,btn){if(!engineOn)return;speed=n;var nodes=document.querySelectorAll('.speed-controls .speed');";
@@ -802,6 +808,14 @@ void handleRoot() {
     html += "var b=document.getElementById('linkBadge');if(b){b.textContent='OFFLINE';b.className='badge warn';}};";
     html += "document.getElementById('simClear').onclick=function(){warn(false);";
     html += "var b=document.getElementById('linkBadge');if(b){b.textContent='LINK';b.className='badge ok';}};";
+    html += "function onPageHidden(){if(document.visibilityState==='hidden')failsafeStop('FAILSAFE');}";
+    html += "window.addEventListener('blur',function(){failsafeStop('FAILSAFE');});";
+    html += "document.addEventListener('visibilitychange',onPageHidden);";
+    html += "window.addEventListener('pagehide',function(){failsafeStop('FAILSAFE');});";
+    html += "document.addEventListener('contextmenu',function(e){";
+    html += "var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'))return;";
+    html += "e.preventDefault();},{passive:false});";
+    html += "document.addEventListener('dblclick',function(e){e.preventDefault();},{passive:false});";
     html += "setTapes(0,0);setEngine(false);";
     html += "</script></body></html>";
     sendText(200, "text/html", html);

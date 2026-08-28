@@ -38,9 +38,10 @@
 ---
 
 ## 💡 投稿注意事項與 checklist
-1. **排版範本**：必須使用官方 [Springer SIST 單欄 Template](https://www.springer.com/gp/authors-editors/conference-proceedings/editors/word-template/19338734)（全文長度限制 10~12 頁）。
-2. **重複率自我檢測**：上傳前請使用 Turnitin 或 iThenticate 比對，總重複率需低於 **20%**。
-3. **英文編修**：研討會官方語言為英文，文章與簡報皆需使用專業學術英文。
+1. **排版範本**：必須使用官方 [Springer Proceedings Word Template](https://www.springer.com/gp/computer-science/lncs/conference-proceedings-guidelines)（SIST 卷同族；追蹤表所稱 SIST 單欄）。全文目標 **10–12 頁**（貼範本後以 PDF 頁數為準）。  
+2. **重複率自我檢測**：上傳前請使用 Turnitin 或 iThenticate 比對，總重複率需低於 **20%**。  
+3. **英文編修**：研討會官方語言為英文；請以 `docs/research/paper*_ssim_sist_en.md` 為貼稿底本，勿直接交中文 md。  
+4. **合規細節／現況落差**：見 [SSIM2026_SIST_COMPLIANCE.md](./SSIM2026_SIST_COMPLIANCE.md)。
 
 ---
 
