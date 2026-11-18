@@ -27,7 +27,7 @@ apps/web-controller/     # 手機／桌面遙控 UI（Web BLE + WiFi HTTP + OTA 
 packages/protocol/       # 雙端共享 BLE／OTA 協定與封包編碼
 firmware/esp32c3-vehicle/# ESP32-C3 PlatformIO 韌體（現行 1.3.1-recovery）
 curriculum/              # Integration Lab、Car Starter／Basic 教材索引
-docs/                    # Playbook、多台 OTA 指南、驗收截圖
+docs/                    # Playbook、多台 OTA 指南、SSIM 研討會論文 (research/) 與 116 教育部教學實踐研究計畫 (teaching-practice/)
 scripts/ota_upload.mjs   # CLI OTA：OTA_HOST=<ip> npm run ota
 firmware_esp32c3_vibe_car_slim.bin          # 正式 OTA 映像（勿改名亂傳別的 bin）
 Vibe-Car-ESP32C3-USB-Flashing-Pack-1.0.0.zip # USB 救援包（含 boot_app0）
