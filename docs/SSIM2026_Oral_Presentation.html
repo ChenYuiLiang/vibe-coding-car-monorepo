@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSIM 2026 Presentation: Full-Stack Vibe Coding Pedagogy</title>
+<style>
+  :root {
+    --bg-dark: #0f172a;
+    --bg-light: #f8fafc;
+    --card-bg: #ffffff;
+    --primary: #2563eb;
+    --cyan: #0ea5e9;
+    --green: #10b981;
+    --red: #ef4444;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #020617;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #presentation {
+    width: 100vw;
+    height: 56.25vw; /* 16:9 */
+    max-height: 100vh;
+    max-width: 177.78vh; /* 16:9 */
+    position: relative;
+    background: var(--bg-light);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+  }
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 3.5vw 5vw 4vw 5vw;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+  .slide.dark { background: var(--bg-dark); color: #ffffff; }
+
+  /* Header */
+  .section-tag {
+    font-size: 0.9vw;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 0.4vw;
+  }
+  .slide.dark .section-tag { color: var(--cyan); }
+  .slide-title {
+    font-size: 2vw;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 2vw;
+    line-height: 1.2;
+  }
+  .slide.dark .slide-title { color: #ffffff; }
+
+  /* Grid Layouts */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.8vw; flex: 1; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2vw; flex: 1; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2vw; flex: 1; }
+  .list-stack { display: flex; flex-direction: column; gap: 1vw; flex: 1; }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 0.8vw;
+    border: 1px solid var(--border);
+    padding: 1.5vw;
+    display: flex;
+    flex-direction: column;
+    border-top: 0.4vw solid var(--primary);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+  .card.accent-red { border-top-color: var(--red); }
+  .card.accent-green { border-top-color: var(--green); }
+  .card.accent-cyan { border-top-color: var(--cyan); }
+  .card.accent-dark { border-top-color: var(--bg-dark); }
+  
+  .card-title {
+    font-size: 1.2vw;
+    font-weight: 700;
+    margin-bottom: 0.8vw;
+    color: var(--text-main);
+  }
+  .card-body {
+    font-size: 0.95vw;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .card-stat {
+    font-size: 3vw;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5vw;
+  }
+
+  /* Controls & UI */
+  .footer-bar {
+    position: absolute;
+    bottom: 1vw;
+    left: 5vw;
+    right: 5vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8vw;
+    color: var(--text-muted);
+  }
+  .slide.dark .footer-bar { color: #64748b; }
+  .nav-btn {
+    background: rgba(0,0,0,0.1);
+    border: none;
+    padding: 0.4vw 0.8vw;
+    border-radius: 0.4vw;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8vw;
+    color: inherit;
+  }
+  .nav-btn:hover { background: rgba(0,0,0,0.2); }
+  
+  #speaker-notes {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 400px;
+    max-height: 250px;
+    background: rgba(15, 23, 42, 0.95);
+    color: #e2e8f0;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-y: auto;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<div id="presentation">
+  <!-- Slide 1: Title -->
+  <div class="slide dark active" data-note="[0:00 - 1:00] Rover: Good morning session chairs, distinguished scholars, and fellow researchers. I am Rover Chen from Taiwan Vibe Coding Company...">
+    <div style="background: #1e293b; color: var(--cyan); border: 1px solid var(--primary); border-radius: 20px; display: inline-block; padding: 4px 16px; font-weight: 700; font-size: 0.9vw; margin-bottom: 1.5vw; width: fit-content;">
+      SSIM 2026 ｜ Oral Presentation
+    </div>
+    <h1 style="font-size: 2.6vw; font-weight: 800; line-height: 1.2; margin-bottom: 1vw;">
+      Full-Stack Vibe Coding Pedagogy & Monorepo HIL Architecture for Physical AI Education
+    </h1>
+    <h2 style="font-size: 1.3vw; font-weight: 500; color: var(--cyan); margin-bottom: 2.5vw;">
+      Bridging the Cyber-Physical Chasm through the PACE Framework and Shared Protocols (Papers 27 & 28)
+    </h2>
+    <div style="background: #1e293b; border-radius: 12px; padding: 1.5vw 2vw; border: 1px solid #334155;">
+      <p style="font-size: 1.2vw; font-weight: 700; color: #fff; margin-bottom: 0.5vw;">Presenter: Rover (Yu-Kuan) Chen <span style="font-weight: 400; color: #94a3b8;">(Taiwan Vibe Coding Co.)</span></p>
+      <p style="font-size: 1vw; color: #cbd5e1; margin-bottom: 0.4vw;">Co-Authors & Demo Tutors: Rui-Yu Lin (Shih Hsin Univ.), Yu-Ting Chen (Chaoyang Univ. of Tech.)</p>
+      <p style="font-size: 1vw; color: var(--cyan); margin-bottom: 0.8vw;">Principal Advisor: Prof. Yui-Liang Chen (Dept. of Information Management, Shih Hsin University)</p>
+      <p style="font-size: 0.85vw; color: #64748b;">Venue: Chaoyang University of Technology (CYUT), Taiwan ｜ Dec 17–19, 2026</p>
+    </div>
+  </div>
+
+  <!-- Slide 2: Core Problem -->
+  <div class="slide" data-note="[1:00 - 2:15] Rover: In traditional IoT and embedded computing education, students confront the Cyber-Physical Chasm...">
+    <div class="section-tag">Section 1: The Problem & Context (Paper 28)</div>
+    <div class="slide-title">The Core Problem: The Cyber-Physical Chasm</div>
+    <div class="grid-3">
+      <div class="card accent-red">
+        <div class="card-title" style="color: var(--red);">1. Syntax Gatekeeping</div>
+        <div class="card-body">Novices spend >70% of working memory wrestling with low-level C/C++ compiler errors, pointer arithmetic, register configs, and interrupt flags.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">2. Cognitive Overload (CLT)</div>
+        <div class="card-body">Extraneous cognitive load suffocates the working memory required for high-order system architecture, kinematic intuition, and creative design (Sweller, 1988).</div>
+      </div>
+      <div class="card accent-dark">
+        <div class="card-title">3. Acute Programming Anxiety</div>
+        <div class="card-body">Repeated compilation failures and burned hardware trigger acute Programming Anxiety (PAS), leading to learned helplessness and high dropout rates.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Paradigm Shift & Trap -->
+  <div class="slide" data-note="[2:15 - 3:30] Rover: When Andrej Karpathy coined Vibe Coding in 2025, it was hailed as a revolution. But in embedded IoT...">
+    <div class="section-tag">Section 1: The Problem & Context (Papers 27 & 28)</div>
+    <div class="slide-title">Paradigm Shift: Vibe Coding & The "Protocol Hallucination" Trap</div>
+    <div class="grid-2">
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">The Promise: Vibe Coding (Karpathy, 2025)</div>
+        <div class="card-body">
+          <p>• Natural-language human-AI intent orchestration.</p>
+          <p style="margin-top: 0.6vw;">• Rapid synthesis of full-stack prototypes in minutes.</p>
+          <p style="margin-top: 0.6vw;">• Removes low-level syntax barriers, empowering learners to focus on system design.</p>
+        </div>
+      </div>
+      <div class="card accent-red">
+        <div class="card-title" style="color: var(--red);">The Trap: Protocol Hallucination in IoT</div>
+        <div class="card-body">
+          <p>• AI produces code that "looks correct" and compiles, but catastrophically fails on hardware.</p>
+          <p style="margin-top: 0.6vw;">• <b>Schema Mismatches</b>: Web app sends JSON while firmware expects 4-byte binary structs.</p>
+          <p style="margin-top: 0.6vw;">• <b>Hardware Blindness</b>: AI assigns strapping pins (GPIO 2/8/9) or omits watchdog timers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: PACE Framework -->
+  <div class="slide" data-note="[3:30 - 4:45] Rover: To solve this, Paper 28 introduces the PACE Teaching Framework...">
+    <div class="section-tag">Section 2: Pedagogical Innovation (Paper 28 Core)</div>
+    <div class="slide-title">Pedagogical Framework: The 4-Stage PACE Model</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">P - Prompt Design</div>
+        <div class="card-body">Role-Task-Constraint structure. Specify hardware pin reservations, non-blocking requirements, and packet schemas explicitly.</div>
+      </div>
+      <div class="card accent-cyan">
+        <div class="card-title" style="color: var(--cyan);">A - Code Audit</div>
+        <div class="card-body">Critical peer and automated code review. Ban blocking delay(); inspect strapping pins; verify 500ms heartbeat safeguards.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">C - Micro-Commit</div>
+        <div class="card-body">Fine-grained Git commits with mandatory provenance tags: [AI-Generated], [Human-Modified], and rationale logs.</div>
+      </div>
+      <div class="card accent-dark">
+        <div class="card-title">E - Dual Evaluation</div>
+        <div class="card-body">Layer 1: CI automated linting and contract unit tests. Layer 2: Hardware-in-the-Loop physical track verification.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Mentorship -->
+  <div class="slide" data-note="[4:45 - 6:00] Rover: Crucially, AI velocity requires human companionship. We established a Two-Tier Mentorship system...">
+    <div class="section-tag">Section 2: Pedagogical Innovation (Paper 28 Core)</div>
+    <div class="slide-title">Two-Tier Mentorship & The Vibe Classroom Platform</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Two-Tier Mentorship Ecosystem</div>
+        <div class="card-body">
+          <p>• <b>Tier 1 (Core Training)</b>: Taiwan Vibe Coding Co. trains collegiate tutors (Rui-Yu & Yu-Ting) in weekly study groups.</p>
+          <p style="margin-top: 0.6vw;">• <b>Tier 2 (Scaffolding)</b>: Tutors accompany novice learners in university laboratories and outdoor camps.</p>
+          <p style="margin-top: 0.6vw;">• <b>Real-World Validation</b>: Successfully deployed for junior-high Boy Scouts at Yangmingshan Camp.</p>
+        </div>
+      </div>
+      <div class="card accent-cyan">
+        <div class="card-title" style="color: var(--cyan);">Vibe Classroom Cloud Infrastructure</div>
+        <div class="card-body">
+          <p>• <b>GitHub Classroom</b>: One-click template distribution per student team.</p>
+          <p style="margin-top: 0.6vw;">• <b>GitHub Codespaces</b>: Cloud-based VS Code environment with pre-installed PlatformIO CLI and Web dev tools.</p>
+          <p style="margin-top: 0.6vw;">• <b>GitHub Actions CI</b>: Automated contract check and artifact validation upon every git push.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Monorepo -->
+  <div class="slide" data-note="[6:00 - 7:30] Rover: Now turning to Paper 27: How do we technically enforce consistency? Turborepo Monorepo...">
+    <div class="section-tag">Section 3: Engineering Architecture (Paper 27 Core)</div>
+    <div class="slide-title">Full-Stack Monorepo Architecture: Single Source of Truth</div>
+    <div class="list-stack">
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">Heterogeneous Monorepo</div>
+        <div class="card-body">Turborepo + pnpm managing both apps/web-controller (HTML5/Web BLE) and apps/esp32-c3 (PlatformIO C++ firmware) in one unified repository.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">Shared Protocol (packages/protocol)</div>
+        <div class="card-body">Single Source of Truth. TypeScript & C header bindings share packet schemas. Any field alteration immediately forces compile check across both ends.</div>
+      </div>
+      <div class="card accent-dark">
+        <div class="card-title">68% Packet Slimming</div>
+        <div class="card-body">Verbose 46-byte JSON compressed into compact 15-byte binary TypedArray. Reduces transmission latency to &lt;15ms at 50Hz control frequency.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Physical Safeguards -->
+  <div class="slide" data-note="[7:30 - 8:45] Rover: In Physical AI, software mistakes have kinetic consequences. We embedded 3 fail-safes...">
+    <div class="section-tag">Section 3: Engineering Architecture (Paper 27 Core)</div>
+    <div class="slide-title">Physical Safeguards: Triple Fail-Safe Architecture</div>
+    <div class="grid-3">
+      <div class="card accent-red">
+        <div class="card-title" style="color: var(--red);">1. 500ms Watchdog Emergency Stop</div>
+        <div class="card-body">Vehicles listen for 50Hz heartbeat packets. If connection is lost for &gt;= 500ms, firmware instantly cuts PWM to 0, preventing runaway crashes.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">2. Dual-Mode Wi-Fi Self-Healing</div>
+        <div class="card-body">Operates in STA mode. If router connection drops for &gt;= 8 seconds, the vehicle automatically spawns emergency SoftAP (vibe123456) for recovery.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">3. 20s Delayed-Commit OTA Rollback</div>
+        <div class="card-body">Over-The-Air updates require active confirmation within 20 seconds. If new firmware crashes or hangs, hardware automatically rolls back to safe partition.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: HIL Verification -->
+  <div class="slide" data-note="[8:45 - 9:45] Rover: To eliminate academic dishonesty and ensure genuine hands-on competence, HIL closed-loop verification...">
+    <div class="section-tag">Section 4: Hardware-in-the-Loop Verification (Paper 27 Core)</div>
+    <div class="slide-title">Hardware-in-the-Loop (HIL): 3 Non-Forgeable Physical Artifacts</div>
+    <div class="grid-3">
+      <div class="card accent-cyan">
+        <div class="card-title" style="color: var(--cyan);">Artifact 1: Mobile Preview</div>
+        <div class="card-body"><code>assets/mobile-preview.png</code><br><br>Proof of responsive Web App, touch hotspot compliance (&gt;=48px), and active Web Bluetooth GATT connection status.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">Artifact 2: Hardware Wiring</div>
+        <div class="card-body"><code>assets/hardware-setup.jpg</code><br><br>High-resolution photograph of physical breadboard, motor H-bridge wiring, battery voltage verification, and pinout sanity check.</div>
+      </div>
+      <div class="card accent-dark">
+        <div class="card-title">Artifact 3: Serial Telemetry Log</div>
+        <div class="card-body"><code>assets/serial-log.png</code><br><br>115200 baud serial monitor capture showing successful boot, memory partition self-check, and active 50Hz heartbeat handshake.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: 45 Micro-Units -->
+  <div class="slide" data-note="[9:45 - 10:30] Rover: We systematically mapped this entire architecture into 45 progressive micro-units...">
+    <div class="section-tag">Section 4: Curriculum Synthesis (Papers 27 & 28)</div>
+    <div class="slide-title">45 Micro-Unit Curriculum Roadmap (18 Weeks)</div>
+    <div class="grid-4">
+      <div class="card accent-dark">
+        <div class="card-title">Phase 0: Foundations</div>
+        <div class="card-body"><b>W1–W3 (3 Units)</b><br>• Developer Identity<br>• PlatformIO CLI & Git<br>• Flash Partitions & Strapping Pins</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">Phase 1: Car Starter</div>
+        <div class="card-body"><b>W4–W7 (15 Units)</b><br>• Web App Adaptive Layout<br>• Web BLE GATT & Slimming<br>• Canvas Virtual Joystick<br>★ <b>Milestone 1: BLE Challenge</b></div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">Phase 2: Car Basic</div>
+        <div class="card-body"><b>W8–W11 (15 Units)</b><br>• PWM & Non-blocking Timers<br>• Wi-Fi Dual-Mode Self-Healing<br>• 500ms Watchdog Safeguard<br>★ <b>Midterm Architecture Review</b></div>
+      </div>
+      <div class="card accent-cyan">
+        <div class="card-title" style="color: var(--cyan);">Phase 3: Integration</div>
+        <div class="card-body"><b>W12–W18 (12 Units)</b><br>• ESP32-CAM Vision Stream<br>• Vision Guidance & Tracking<br>• System Hardening SOP<br>★ <b>Capstone Racing Exhibition</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: Transition to Demo -->
+  <div class="slide dark" data-note="[10:30 - 11:00] Rover: Now, talk is cheap—show me the code, and show me the physical car! Let's welcome Rui-Yu Lin and Yu-Ting Chen...">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+      <div style="font-size: 3.2vw; font-weight: 800; color: var(--cyan); margin-bottom: 1.5vw;">
+        LIVE HARDWARE DEMONSTRATION
+      </div>
+      <div style="font-size: 1.8vw; color: #fff; margin-bottom: 2vw;">
+        Web BLE Controller ⟷ ESP32-C3 Robotic Vehicle
+      </div>
+      <div style="font-size: 1.2vw; color: #94a3b8; background: #1e293b; padding: 12px 28px; border-radius: 30px; border: 1px solid #334155;">
+        Conducted live by Demo Tutors: Rui-Yu Lin & Yu-Ting Chen
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Demo Steps -->
+  <div class="slide" data-note="[11:00 - 13:30] Rover Live Commentary: Notice how the phone connects via Web Bluetooth without installing any app...">
+    <div class="section-tag">Section 5: Live Demonstration (3 Minutes)</div>
+    <div class="slide-title">System Verification in Action</div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">1. Zero-Install Web BLE</div>
+        <div class="card-body">• Tutor Rui-Yu opens Chrome on phone.<br>• Clicks "Connect BLE" -&gt; 1-sec pairing.<br>• Vehicle LED locks solid blue.<br>• Serial: <code>[BLE Connected, MTU=23]</code>.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">2. Differential Dynamics</div>
+        <div class="card-body">• Canvas 2D joystick converts touch vectors (r, θ) to wheel speeds (VL, VR).<br>• 50Hz binary packet streaming.<br>• Smooth 360-degree zero-radius spin.</div>
+      </div>
+      <div class="card accent-red">
+        <div class="card-title" style="color: var(--red);">3. 500ms Watchdog Cutoff</div>
+        <div class="card-body">★ <b>CLIMAX: Airplane Mode Triggered!</b><br>• Connection abruptly severed.<br>• Vehicle <b>HALTS INSTANTLY (&lt;0.5s)!</b><br>• Serial: <code>WATCHDOG EMERGENCY STOP!</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: Empirical Findings -->
+  <div class="slide" data-note="[13:30 - 14:30] Rover: Our empirical data across 4 semesters and 396 student evaluations confirms profound cognitive shifts...">
+    <div class="section-tag">Section 6: Empirical Findings (Paper 28 Data)</div>
+    <div class="slide-title">Quantitative Empirical Results: Psychological & Learning Shifts</div>
+    <div class="grid-3">
+      <div class="card accent-green">
+        <div class="card-stat" style="color: var(--green);">-31.4%</div>
+        <div class="card-title">Programming Anxiety (PAS)</div>
+        <div class="card-body">Statistically significant drop in student coding anxiety (p &lt; .001). Abstracting syntax eliminates compilation trauma.</div>
+      </div>
+      <div class="card">
+        <div class="card-stat" style="color: var(--primary);">+26.8%</div>
+        <div class="card-title">Self-Efficacy (CPSES)</div>
+        <div class="card-body">Significant surge in programming self-efficacy (p &lt; .001, Cohen's d = 0.92). Students identify as system architects.</div>
+      </div>
+      <div class="card accent-cyan">
+        <div class="card-stat" style="color: var(--cyan);">100%</div>
+        <div class="card-title">Track Completion Rate</div>
+        <div class="card-body">Every single student team across 4 semesters successfully constructed, debugged, and raced their autonomous vehicle.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Conclusion -->
+  <div class="slide" data-note="[14:30 - 15:30] Rover: To conclude: Vibe Coding in Physical AI is not about cutting corners—it is about empowering students...">
+    <div class="section-tag">Section 6: Synthesis & Takeaways (Both Papers)</div>
+    <div class="slide-title">Conclusion & Key Engineering Takeaways</div>
+    <div class="list-stack">
+      <div class="card accent-dark">
+        <div class="card-title">1. Vibe Coding is Not "Code-Free"</div>
+        <div class="card-body">It elevates the human from syntax typist to Chief Engineering Auditor. Critical code auditing is the core competency of the AI era.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--primary);">2. Shared Contracts Eradicate Drift</div>
+        <div class="card-body">In cross-platform IoT, Monorepo shared packages (packages/protocol) provide the Single Source of Truth, making protocol hallucination structurally impossible.</div>
+      </div>
+      <div class="card accent-red">
+        <div class="card-title" style="color: var(--red);">3. Safety-First Engineering</div>
+        <div class="card-body">Physical AI demands hardware-enforced fail-safes: 500ms Watchdogs, self-healing networks, and HIL verification are non-negotiable.</div>
+      </div>
+      <div class="card accent-green">
+        <div class="card-title" style="color: var(--green);">4. Open-Source Commitment</div>
+        <div class="card-body">Our entire 45-unit curriculum, Monorepo codebase, and 3D schematics are fully open-sourced for the global academic community.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: Q&A -->
+  <div class="slide dark" data-note="[15:30] Rover: Thank you very much for your time and attention. Rover Chen, Rui-Yu Lin, and Yu-Ting Chen now warmly welcome questions...">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+      <div style="font-size: 3.5vw; font-weight: 800; color: #fff; margin-bottom: 1vw;">
+        Thank You Very Much!
+      </div>
+      <div style="font-size: 2.2vw; font-weight: 700; color: var(--cyan); margin-bottom: 2.5vw;">
+        Questions & Answers
+      </div>
+      <div style="background: #1e293b; border-radius: 12px; padding: 1.5vw 2.5vw; border: 1px solid #334155; margin-bottom: 1.5vw;">
+        <p style="font-size: 1.1vw; color: #cbd5e1; margin-bottom: 0.5vw;">Open-Source Monorepo & Curriculum Repository:</p>
+        <p style="font-size: 1.2vw; font-weight: 700; color: var(--cyan);">https://github.com/ChenYuiLiang/vibe-coding-car-monorepo</p>
+      </div>
+      <div style="font-size: 1vw; color: #94a3b8;">
+        Rover Chen (rover@vibecoding.tw) ｜ Prof. Yui-Liang Chen (ychen@mail.shu.edu.tw)
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Navigation -->
+  <div class="footer-bar">
+    <div>SSIM 2026 ｜ Paper 27 & 28 Presentation</div>
+    <div>
+      <button class="nav-btn" onclick="prevSlide()">◀ Prev (←)</button>
+      <span id="slide-num" style="margin: 0 1vw; font-weight: 700;">1 / 14</span>
+      <button class="nav-btn" onclick="nextSlide()">Next (→) ▶</button>
+      <button class="nav-btn" onclick="toggleNotes()" style="margin-left: 1vw;">Notes (S)</button>
+    </div>
+  </div>
+</div>
+
+<div id="speaker-notes"></div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const slideNum = document.getElementById('slide-num');
+  const notesBox = document.getElementById('speaker-notes');
+
+  function showSlide(index) {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (index + slides.length) % slides.length;
+    slides[currentSlide].classList.add('active');
+    slideNum.textContent = `${currentSlide + 1} / ${slides.length}`;
+    updateNotes();
+  }
+  function nextSlide() { showSlide(currentSlide + 1); }
+  function prevSlide() { showSlide(currentSlide - 1); }
+
+  function updateNotes() {
+    const note = slides[currentSlide].getAttribute('data-note') || 'No notes for this slide.';
+    notesBox.innerHTML = `<b>Speaker Notes (Slide ${currentSlide + 1}):</b><br><br>${note}`;
+  }
+
+  function toggleNotes() {
+    notesBox.style.display = notesBox.style.display === 'block' ? 'none' : 'block';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+    if (e.key === 's' || e.key === 'S') toggleNotes();
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  updateNotes();
+</script>
+</body>
+</html>
