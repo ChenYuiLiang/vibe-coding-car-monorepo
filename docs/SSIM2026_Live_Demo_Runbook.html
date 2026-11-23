@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>SSIM 2026 現場 Live Demo 逐步操作手冊 (Tutors' Demo Runbook)</title>
+
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 8mm 12mm 10mm 12mm;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Heiti TC", "Microsoft JhengHei", Roboto, sans-serif;
+        color: #1e293b;
+        background: #ffffff;
+        font-size: 8.2pt;
+        line-height: 1.4;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Running Page Header */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1.5px solid #0284c7;
+        padding-bottom: 3px;
+        margin-bottom: 8px;
+        font-size: 7.5pt;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .page-header .brand {
+        color: #0369a1;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+      }
+
+      /* Page Wrappers */
+      .page {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+
+      /* Main Title */
+      h1 {
+        font-size: 14pt;
+        color: #0f172a;
+        margin: 0 0 4px 0;
+        font-weight: 800;
+      }
+
+      /* Metadata Blockquote Box */
+      blockquote {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-left: 4px solid #0284c7;
+        border-radius: 6px;
+        margin: 4px 0 10px 0;
+        padding: 6px 12px;
+        font-size: 8pt;
+        color: #0f172a;
+      }
+      blockquote p {
+        margin: 1px 0;
+        line-height: 1.45;
+      }
+
+      /* Headings */
+      h2 {
+        font-size: 11pt;
+        color: #0f172a;
+        border-left: 3.5px solid #0369a1;
+        padding-left: 6px;
+        margin: 6px 0 6px 0;
+        font-weight: 700;
+        page-break-after: avoid;
+      }
+      h3 {
+        font-size: 9pt;
+        color: #0369a1;
+        margin: 4px 0 3px 0;
+        font-weight: 700;
+      }
+
+      /* Grids & Cards */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .checklist-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+        border-top: 3px solid #0284c7;
+      }
+      .tip-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 10px;
+        border-top: 3px solid #10b981;
+      }
+      .tip-title {
+        font-weight: 700;
+        color: #065f46;
+        font-size: 8.5pt;
+        margin-bottom: 4px;
+      }
+      .tip-body {
+        font-size: 7.8pt;
+        color: #334155;
+        line-height: 1.35;
+      }
+
+      /* Checklists */
+      ul.task-list {
+        list-style-type: none;
+        padding-left: 0;
+        margin: 3px 0;
+      }
+      ul.task-list > li {
+        margin-bottom: 5px;
+        padding-left: 18px;
+        position: relative;
+        font-size: 8pt;
+      }
+      ul.task-list > li > label > input[type="checkbox"] {
+        position: absolute;
+        left: 0;
+        top: 2px;
+        width: 12px;
+        height: 12px;
+        accent-color: #0284c7;
+      }
+      ul.task-list ul {
+        list-style-type: disc;
+        padding-left: 16px;
+        margin: 1px 0 3px 0;
+        color: #475569;
+        font-size: 7.6pt;
+      }
+      ul.task-list ul li {
+        margin-bottom: 1px;
+      }
+
+      /* Tables */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 6px 0 8px 0;
+        font-size: 7.6pt;
+        background: #ffffff;
+      }
+      th, td {
+        border: 1px solid #cbd5e1;
+        padding: 4px 6px;
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.3;
+      }
+      th {
+        background-color: #0f172a;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 7.8pt;
+        letter-spacing: 0.02em;
+      }
+      tr:nth-child(even) td {
+        background-color: #f8fafc;
+      }
+
+      /* Climax Highlight for Watchdog Row */
+      tr.climax-row td {
+        background-color: #fff1f2 !important;
+        border-top: 1.5px solid #ef4444;
+        border-bottom: 1.5px solid #ef4444;
+      }
+      .climax-badge {
+        display: inline-block;
+        background: #dc2626;
+        color: #ffffff;
+        font-weight: 800;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 7.5pt;
+      }
+
+      /* Code snippets */
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        background-color: #e2e8f0;
+        color: #0f172a;
+        padding: 1px 3px;
+        border-radius: 2px;
+        font-size: 7.2pt;
+      }
+
+      /* Footer Note */
+      .footer-note {
+        margin-top: auto;
+        padding-top: 4px;
+        border-top: 1px solid #cbd5e1;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.2pt;
+        color: #64748b;
+      }
+    </style>
+    
+</head>
+<body>
+
+<!-- ==================== PAGE 1: PRE-FLIGHT CHECKLIST ==================== -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="brand">SSIM 2026 ｜ International Conference on Social Science and Intelligent Management</span>
+    <span>Dec 17–19, 2026 ｜ Chaoyang University of Technology (CYUT)</span>
+  </div>
+
+  <h1 id="ssim-2026-現場-live-demo-逐步操作手冊-tutors-demo-runbook">SSIM
+2026 現場 Live Demo 逐步操作手冊 (Tutors’ Demo Runbook)</h1>
+<blockquote>
+<p><strong>會議名稱</strong>：2026 International Conference on Social
+Science and Intelligent Management (SSIM 2026)<br />
+<strong>展示主題</strong>：Full-Stack Vibe Coding: Web BLE 遙控器與
+ESP32-C3 實體自走車實機驗證（涵蓋 Paper 27 &amp; Paper 28）<br />
+<strong>展示時限</strong>：<strong>3 分鐘</strong>（包含於 20
+分鐘整體發表內）<br />
+<strong>發表團隊分工</strong>：<br />
+* <strong>講者與引導（Commentator）</strong>：陳育冠（Rover）<br />
+* <strong>Tutor A（手機控制端操盤手）</strong>：林瑞昱（Rui-Yu）<br />
+* <strong>Tutor
+B（硬體與串口監控操盤手）</strong>：陳俞廷（Yu-Ting）<br />
+* <strong>指導教授</strong>：陳育亮 博士（Prof. Yui-Liang Chen,
+Ph.D.）｜ 世新大學 資訊管理學系</p>
+</blockquote>
+
+  
+        <h2 id="一-展前-30-分鐘整備清單-pre-flight-checklist">🧰 一、 展前 30 分鐘整備清單 (Pre-Flight Checklist)</h2>
+        <div class="grid-2">
+          <div class="checklist-card">
+            <h3 id="硬體載具整備負責人俞廷-yu-ting">1. 硬體載具整備（負責人：俞廷
+Yu-Ting）</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" /><strong>自走車主機（Car
+Alpha）</strong>：</label>
+<ul>
+<li>ESP32-C3 控制核心正常，天線無鬆脫。</li>
+<li>TB6612 馬達驅動板接線牢固，馬達電源開關切換順暢。</li>
+<li>雙輪差速齒輪轉向滑順，無異物卡阻。</li>
+</ul></li>
+<li><label><input type="checkbox" /><strong>自走車備用機（Car
+Beta）</strong>：</label>
+<ul>
+<li>與主機完全相同之備用車，已預先燒錄最新版
+<code>firmware_esp32c3_vibe_car.bin</code>。</li>
+<li>放置於講台隨手可取處，以防突發狀況 5 秒內抽換。</li>
+</ul></li>
+<li><label><input type="checkbox" /><strong>18650
+鋰電池組</strong>：</label>
+<ul>
+<li>使用三用電表量測主機與備用電池電壓，確認 <span
+class="math inline"> ≥ 7.8V</span>（兩串滿電約 8.2V~8.4V）。</li>
+<li>備妥至少 2 組充飽電之備用鋰電池與 Type-C 充電線。</li>
+</ul></li>
+<li><label><input type="checkbox" /><strong>筆電監控端（Serial
+Monitor）</strong>：</label>
+<ul>
+<li>筆電連接 ESP32-C3 USB 埠（或透過第二組 ESP32 進行串口監聽）。</li>
+<li>開啟 VS Code / PlatformIO 或 Arduino IDE 序列埠監控視窗，設定波特率
+<strong>115200</strong>。</li>
+<li>投屏或置於講台面向評審之副螢幕。</li>
+</ul></li>
+</ul>
+
+          </div>
+          <div class="checklist-card">
+            <h3 id="軟體與手機端整備負責人瑞昱-rui-yu">2.
+軟體與手機端整備（負責人：瑞昱 Rui-Yu）</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" /><strong>展示手機</strong>：</label>
+<ul>
+<li>作業系統：iOS（Safari/Bluefy）或 Android（Chrome）。建議優先使用
+<strong>Android Chrome</strong> 或支援 Web Bluetooth API
+之專用瀏覽器。</li>
+<li>手機設定：
+<ul>
+<li>開啟「永不休眠」（螢幕逾時設為 Never）。</li>
+<li>關閉自動旋轉（鎖定直向）。</li>
+<li>開啟「飛航模式切換快捷按鈕」（後續 Watchdog 演示關鍵！）。</li>
+</ul></li>
+</ul></li>
+<li><label><input type="checkbox" /><strong>Web Controller
+載入</strong>：</label>
+<ul>
+<li>本地或離線伺服器開啟 <code>http://localhost:3000</code> 或預先快取之
+PWA 頁面。</li>
+<li>測試 Web Bluetooth 搜尋功能，確認能在清單中辨識
+<code>Vibe-Car-C3</code>。</li>
+</ul></li>
+<li><label><input type="checkbox" /><strong>投屏輸出</strong>：</label>
+<ul>
+<li>手機透過 Type-C to HDMI 轉接線（最穩！）或 AirPlay
+投屏至會場主投影螢幕。</li>
+</ul></li>
+</ul>
+
+          </div>
+        </div>
+        
+
+  <div class="footer-note">
+    <span>SSIM 2026 ｜ Live Demo Runbook (Page 1 of 3: Pre-Flight Checklist)</span>
+    <span>Advisor: Prof. Yui-Liang Chen (陳育亮 博士) ｜ Shih Hsin University</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 2: 3-MINUTE ACTION RUNBOOK ==================== -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="brand">SSIM 2026 ｜ Live Stage Action Runbook (3-Minute Demonstration)</span>
+    <span>Papers 27 & 28 ｜ Full-Stack Vibe Coding Pedagogy & Monorepo HIL Architecture</span>
+  </div>
+
+  <h2 id="二-現場-3-分鐘毫秒級操作時序表-step-by-step-runbook">⏱️ 二、
+現場 3 分鐘毫秒級操作時序表 (Step-by-Step Runbook)</h2>
+<p>當主講人 <strong>Rover</strong> 演講進行至第 10 頁投影片（約第
+10:30），正式交棒給 Tutors：</p>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">時間 (秒)</th>
+<th style="text-align: left;">講者口令 (Rover’s Cue)</th>
+<th style="text-align: left;">Tutor A 操作動作 (瑞昱 Rui-Yu)</th>
+<th style="text-align: left;">Tutor B 操作動作 (俞廷 Yu-Ting)</th>
+<th style="text-align: left;">觀眾螢幕與舞台視覺效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>00:00 ~ 00:20</strong></td>
+<td style="text-align: left;"><em>“Now, talk is cheap—show me the code,
+and show me the physical car! I’d like to invite our demo tutors, Rui-Yu
+and Yu-Ting, for a live demonstration.”</em></td>
+<td style="text-align: left;">1. 拿起展示手機，喚醒螢幕。<br>2.
+大螢幕切換至手機 Web Controller 畫面。<br>3. 手指停在右上角藍色「Connect
+BLE」按鈕。</td>
+<td style="text-align: left;">1. 將自走車（Car
+Alpha）置於講台中央平坦展示區。<br>2. 開啟車端電源開關。<br>3.
+筆電串口視窗就定位。</td>
+<td style="text-align: left;">螢幕顯示極具科技感之深色系 Web
+控制介面；講台上自走車 LED 藍燈以 1Hz 頻率慢閃（等待配對）。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>00:20 ~ 00:45</strong></td>
+<td style="text-align: left;"><em>“First, observe instant Web BLE
+pairing with zero app installation.”</em></td>
+<td style="text-align: left;">1. 點擊 <strong>「Connect
+BLE」</strong>。<br>2. 彈出系統藍牙視窗，直接點選
+<code>Vibe-Car-C3</code>。</td>
+<td style="text-align: left;">1. 觀察自走車狀態指示燈。<br>2.
+看到藍燈轉為<strong>「恆亮」</strong>，向講者點頭示意。</td>
+<td style="text-align: left;"><strong>1
+秒內配對成功！</strong><br>手機介面頂部狀態列瞬間亮起綠燈：<code>CONNECTED (UUID: 0xFFE0)</code>。<br>串口印出：<code>[BLE] Client Connected! MTU=23</code>。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>00:45 ~ 01:30</strong></td>
+<td style="text-align: left;"><em>“Notice how the Canvas virtual
+joystick converts polar coordinates into differential motor speeds
+live.”</em></td>
+<td style="text-align: left;">1. 大拇指按住虛擬搖桿中心。<br>2.
+緩慢向前輕推 30% <span class="math inline">→</span> 車輛平穩直行。<br>3.
+向左側滑動 <span class="math inline">→</span> 車輛差速順暢左轉。<br>4.
+搖桿拉到底 <span class="math inline">→</span> 車輛原地 360 度旋轉。</td>
+<td style="text-align: left;">1. 雙手在自走車行進範圍外 20
+公分處呈守護姿勢，防範車輛衝出講台邊緣。<br>2.
+指向車輪順暢差速動作，引導評審目光。</td>
+<td
+style="text-align: left;">自走車在講台上展現極高之響應精度，無任何延遲或頓挫；大螢幕即時顯示
+<span
+class="math inline">(<em>r</em>, <em>θ</em>) → (<em>V</em><sub><em>L</em></sub>, <em>V</em><sub><em>R</em></sub>)</span>
+二進位封包串流。</td>
+</tr>
+<tr class="climax-row">
+<td style="text-align: center;"><span class="climax-badge">01:30 ~ 02:15</span></td>
+<td style="text-align: left;"><em>“Now, the ultimate test: What happens
+if the network jams or the phone dies? Watch the 500ms Watchdog
+fail-safe!”</em></td>
+<td
+style="text-align: left;"><strong>【全場高潮核心動作】</strong>：<br>1.
+保持自走車在低速直行狀態。<br>2.
+<strong>右手滑下手機控制中心，果斷按下「飛航模式」（或直接關閉藍牙）！</strong></td>
+<td style="text-align: left;">1. 全神貫注盯緊自走車。<br>2.
+特寫指向筆電串口螢幕。</td>
+<td
+style="text-align: left;"><strong>自走車在前進中瞬間「急停鎖死」！</strong><br>反應時間不到
+0.5
+秒！<br>筆電串口大字噴出：<br><code>[FATAL] Heartbeat Timeout (&gt;500ms)!</code><br><code>[SAFETY] WATCHDOG EMERGENCY STOP ACTIVATED!</code><br>全場感受到震撼之工程安全性！</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>02:15 ~ 02:45</strong></td>
+<td style="text-align: left;"><em>“And with our dual-mode Wi-Fi
+self-healing, the vehicle recovers and enters safe SoftAP
+mode.”</em></td>
+<td style="text-align: left;">1. 關閉飛航模式，點擊重連。<br>2.
+展示手機連入車端自癒熱點 <code>vibe123456</code>。</td>
+<td style="text-align: left;">1. 輕按自走車 Reset 鍵進行重啟。<br>2.
+雙手平舉自走車，向評審席與會眾展示精巧之硬體走線與雙 H 橋機構。</td>
+<td
+style="text-align: left;">串口顯示韌體開機鏈完整、分區表自檢通過；手機透過
+Wi-Fi 重新獲得遠端遙測數據。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>02:45 ~ 03:00</strong></td>
+<td style="text-align: left;"><em>“Thank you Rui-Yu and Yu-Ting! Back to
+our slides.”</em></td>
+<td style="text-align: left;">1. 切換大螢幕信號回 Rover 的簡報第 12
+頁。<br>2. 將手機平放於桌上。</td>
+<td style="text-align: left;">1.
+將自走車關閉電源，整齊放置於展示架。<br>2. 回到後方待命席，準備協助後續
+Q&amp;A。</td>
+<td
+style="text-align: left;">簡報切換至實證量化數據頁，全場給予熱烈掌聲。</td>
+</tr>
+</tbody>
+</table>
+
+
+  <div class="footer-note">
+    <span>SSIM 2026 ｜ Live Demo Runbook (Page 2 of 3: Step-by-Step Timing Runbook)</span>
+    <span>Presenter: Rover Chen ｜ Tutors: Rui-Yu Lin, Yu-Ting Chen ｜ Advisor: 陳育亮 博士</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 3: EMERGENCY CONTINGENCY SOP & TIPS ==================== -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">SSIM 2026 ｜ Contingency SOP & Tutors Pro-Tips</span>
+    <span>Department of Information Management, Shih Hsin University</span>
+  </div>
+
+  <h2 id="三-現場突發狀況應變手冊-emergency-contingency-sop">🚨 三、
+現場突發狀況應變手冊 (Emergency Contingency SOP)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;">突發故障情境 (Failure Mode)</th>
+<th style="text-align: left;">故障根本原因 (Root Cause)</th>
+<th style="text-align: left;">第一時間處置 SOP (Action within 5
+Seconds)</th>
+<th style="text-align: left;">講者口述化解話術 (Rover’s Cover Line)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>1.
+藍牙搜尋不到自走車</strong></td>
+<td style="text-align: left;">會場 2.4GHz
+射頻嚴重干擾，或快取鎖死。</td>
+<td style="text-align: left;"><strong>俞廷</strong> 立即開啟備用車（Car
+Beta）；<strong>瑞昱</strong> 關閉 Chrome 重新開啟，或直接改連車端熱點
+<code>vibe123456</code>。</td>
+<td style="text-align: left;"><em>“As you can see in dense RF
+environments, embedded systems face high interference—which is why our
+Monorepo architecture incorporates automatic Wi-Fi self-healing as a
+dual-fallback.”</em></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>2.
+自走車原地不動或單輪不轉</strong></td>
+<td
+style="text-align: left;">馬達電源開關未開，或馬達線路接觸不良。</td>
+<td style="text-align: left;"><strong>俞廷</strong>
+立即檢查電池盒開關，確認 TB6612 電源指示燈亮起；若仍未轉，立刻抽換 Car
+Beta。</td>
+<td style="text-align: left;"><em>“Hardware in the loop means dealing
+with physical realities—loose wires or battery sags are prime learning
+moments in our 45-unit curriculum.”</em></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>3.
+手機投屏畫面黑屏或斷訊</strong></td>
+<td style="text-align: left;">HDMI 轉接頭鬆脫或 Wi-Fi 投屏延遲。</td>
+<td style="text-align: left;"><strong>瑞昱</strong>
+迅速重新插拔轉接線；<strong>俞廷</strong>
+將自走車往前推進至講台前緣，讓評審直接目視實體車輪動作。</td>
+<td style="text-align: left;"><em>“Let’s focus on the physical vehicle
+right here on the table—the real test is always physical motion, not the
+projector screen!”</em></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4.
+鋰電池電量過低觸發重啟</strong></td>
+<td style="text-align: left;">大電流抽載造成 ESP32
+欠壓重置（Brownout）。</td>
+<td style="text-align: left;"><strong>俞廷</strong>
+立即換上充飽電之備用鋰電池組（5 秒快拆）。</td>
+<td style="text-align: left;"><em>“Our ESP32-C3 firmware has built-in
+Brownout detection to prevent EEPROM corruption during low-voltage
+conditions.”</em></td>
+</tr>
+</tbody>
+</table>
+
+
+  
+    <h2 id="四-tutors-現場加分小技巧">💡 四、 Tutors 現場加分小技巧</h2>
+    <div class="grid-3">
+      <div class="tip-card">
+        <div class="tip-title">1. 動作要大、自信穩健</div>
+        <div class="tip-body">在操作「飛航模式斷開藍牙」時，瑞昱可將手機稍微舉高向評審示意，讓全場看清楚「斷開連線」與「自走車急停」是毫秒級聯動。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-title">2. 串口螢幕調大字體</div>
+        <div class="tip-body">俞廷將 VS Code 串口監控字體設為 <b>18pt 以上</b>，使前排評審能清晰看見 <code>[WATCHDOG CUTOFF MOTORS!]</code> 的大寫紅字警告輸出。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-title">3. 服裝一致與默契</div>
+        <div class="tip-body">發表當天全體著商務休閒裝（深色襯衫或系服），動作俐落、目光堅定，展現團隊專業工程紀律與高度默契！</div>
+      </div>
+    </div>
+    
+
+  <div class="footer-note">
+    <span>SSIM 2026 ｜ Live Demo Runbook (Page 3 of 3: Contingency SOP & Team Execution)</span>
+    <span>Open-Source Monorepo: https://github.com/ChenYuiLiang/vibe-coding-car-monorepo</span>
+  </div>
+</div>
+
+</body>
+</html>
