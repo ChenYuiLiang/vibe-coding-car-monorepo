@@ -102,10 +102,16 @@ p2_p.font.color.rgb = RGBColor(226, 232, 240)
 p2_p.space_before = Pt(6)
 
 p3_p = tf_p.add_paragraph()
-p3_p.text = 'Principal Advisor: Prof. Yui-Liang Chen (Dept. of Information Management, Shih Hsin University)'
+p3_p.text = '指導教授 Principal Advisor: 陳育亮 博士 (Prof. Yui-Liang Chen, Ph.D.)'
 p3_p.font.size = Pt(14)
 p3_p.font.color.rgb = C_CYAN_ACCENT
 p3_p.space_before = Pt(6)
+
+p3_sub = tf_p.add_paragraph()
+p3_sub.text = '世新大學 資訊管理學系 (Dept. of Information Management, Shih Hsin University)'
+p3_sub.font.size = Pt(12)
+p3_sub.font.color.rgb = RGBColor(203, 213, 225)
+p3_sub.space_before = Pt(2)
 
 p4_p = tf_p.add_paragraph()
 p4_p.text = 'Venue: Chaoyang University of Technology (CYUT), Taiwan ｜ Dec 17–19, 2026'
@@ -114,7 +120,7 @@ p4_p.font.color.rgb = C_GRAY_MUTED
 p4_p.space_before = Pt(8)
 
 add_speaker_note(s1, '''[0:00 - 1:00] Rover:
-Good morning session chairs, distinguished scholars, and fellow researchers. I am Rover Chen from Taiwan Vibe Coding Company. Together with Professor Yui-Liang Chen from Shih Hsin University, and our live demo tutors Rui-Yu Lin and Yu-Ting Chen from Chaoyang University of Technology, we are honored to present our research synthesizing Paper 27 and Paper 28. Today, we will introduce our full-stack pedagogical and engineering architecture designed to teach Physical AI through Vibe Coding, culminating in a live hardware demonstration right on stage.''')
+Good morning session chairs, distinguished scholars, and fellow researchers. I am Rover Chen from Taiwan Vibe Coding Company. Together with our principal advisor Professor Yui-Liang Chen (指導教授 陳育亮 博士) from Shih Hsin University, and our live demo tutors Rui-Yu Lin and Yu-Ting Chen from Chaoyang University of Technology, we are honored to present our research synthesizing Paper 27 and Paper 28. Today, we will introduce our full-stack pedagogical and engineering architecture designed to teach Physical AI through Vibe Coding, culminating in a live hardware demonstration right on stage.''')
 
 # ==================== SLIDE 2: The Core Problem ====================
 s2 = prs.slides.add_slide(blank_layout)
@@ -655,7 +661,7 @@ p14_3.alignment = PP_ALIGN.CENTER
 p14_3.space_before = Pt(24)
 
 p14_4 = tf14.add_paragraph()
-p14_4.text = 'Rover Chen (rover@vibecoding.tw) ｜ Prof. Yui-Liang Chen (ychen@mail.shu.edu.tw)'
+p14_4.text = 'Rover Chen (rover@vibecoding.tw) ｜ 指導教授 陳育亮 博士 (ychen@mail.shu.edu.tw)'
 p14_4.font.size = Pt(15)
 p14_4.font.color.rgb = C_GRAY_MUTED
 p14_4.alignment = PP_ALIGN.CENTER
