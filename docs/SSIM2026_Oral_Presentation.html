@@ -352,36 +352,36 @@
   </div>
 
   <!-- Slide 10: Transition to Demo -->
-  <div class="slide dark" data-note="[10:30 - 11:00] Rover: Now, talk is cheap—show me the code, and show me the physical car! I'd like to invite our demo tutors, Rui-Yu Lin and Yu-Ting Chen, for a 3-minute live demonstration of our primary Wi-Fi HTTP product path.">
+  <div class="slide dark" data-note="[08:30 - 09:00] Rover: Now, talk is cheap—show me the code, and show me the physical car! For the next 8 minutes, we invite everyone in the room to join our live Hardware-in-the-Loop demonstration and interactive stress test with our demo tutors, Rui-Yu Lin and Yu-Ting Chen.">
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-      <div style="font-size: 3.2vw; font-weight: 800; color: var(--cyan); margin-bottom: 1.5vw;">
-        LIVE HARDWARE DEMONSTRATION
+      <div style="font-size: 3vw; font-weight: 800; color: var(--cyan); margin-bottom: 1.5vw;">
+        LIVE HARDWARE DEMONSTRATION & AUDIENCE INTERACTION
       </div>
       <div style="font-size: 1.8vw; color: #fff; margin-bottom: 2vw;">
         Vehicle Wi-Fi HTTP Web Controller ⟷ ESP32-C3 Robotic Car
       </div>
       <div style="font-size: 1.2vw; color: #94a3b8; background: #1e293b; padding: 12px 28px; border-radius: 30px; border: 1px solid #334155;">
-        Primary Product Path (192.168.4.1) ｜ Demo Tutors: Rui-Yu Lin & Yu-Ting Chen
+        8-Minute Interactive HIL Verification (08:30–16:30) ｜ Demo Tutors: Rui-Yu Lin & Yu-Ting Chen
       </div>
     </div>
   </div>
 
   <!-- Slide 11: Demo Steps -->
-  <div class="slide" data-note="[11:00 - 13:30] Rover Live Commentary: [00:00-00:45] 'Talk is cheap—let's verify the primary Wi-Fi HTTP product path with zero app installation.' [00:45-01:30] 'Notice the D-pad control and release-to-stop safety: sliding a finger off the button halts the wheels immediately.' [01:30-02:15] 'Now, the ultimate HIL test: What happens if Wi-Fi drops completely? Watch the 500ms firmware Watchdog fail-safe!' [02:15-02:45] 'Without rebooting the board, disabling Airplane Mode restores telemetry via /api/status. BLE and Canvas remain optional labs.' [02:45-03:00] 'Thank you Rui-Yu and Yu-Ting! Let's map what we just saw to our 5-layer HIL Rubric.'">
-    <div class="section-tag">Section 5: Live Demonstration (3 Minutes)</div>
-    <div class="slide-title">HIL System Verification: Wi-Fi HTTP & 500ms Watchdog</div>
+  <div class="slide" data-note="[09:00 - 16:30] Rover Live Commentary: [0:00-3:00 Baseline] 'Talk is cheap—let's verify the primary Wi-Fi HTTP product path with zero app installation.' Notice the D-pad control and release-to-stop safety: sliding a finger off the button halts the wheels immediately. [3:00-5:30 Audience Hands-On] 'Now, we would love to invite our session chair or an audience member to test our release-to-stop safety firsthand!' Rui-Yu passes the guest phone to the volunteer. 'Please hold Forward for 2 seconds, and then slide your finger off. Notice how the browser event handler halts the motors instantly!' [5:30-8:00 Watchdog Climax] 'Now for the ultimate stress test: What happens if Wi-Fi drops completely? Let's have the entire room countdown with us: Three, Two, One—Airplane Mode!' Watch the wheels freeze in under 500ms, confirmed by our 18pt serial monitor alert. 'Without rebooting the board, disabling Airplane Mode restores telemetry via /api/status.' 'Thank you Rui-Yu, Yu-Ting, and our guest driver! Let's map what we just saw to our 5-layer HIL Rubric.'">
+    <div class="section-tag">Section 5: Live Demonstration & Audience Interaction (8 Minutes)</div>
+    <div class="slide-title">HIL System Verification & Audience-in-the-Loop Protocol</div>
     <div class="grid-3">
       <div class="card">
-        <div class="card-title" style="color: var(--primary);">1. Primary Wi-Fi HTTP Path</div>
-        <div class="card-body">• Phone connects to Car SoftAP (192.168.4.1) with zero app install.<br>• Browser activates ENGINE switch.<br>• Transparent acrylic test stand ensures visible wheel motion with zero runaway risk.</div>
+        <div class="card-title" style="color: var(--primary);">1. Wi-Fi HTTP Baseline (0:00–3:00)</div>
+        <div class="card-body">• Phone connects to Car SoftAP (192.168.4.1) with zero app install.<br>• Browser activates ENGINE switch.<br>• Responsive D-pad with pointercancel release-to-stop safety.<br>• Transparent acrylic test stand ensures visible wheel motion with zero runaway risk.</div>
       </div>
       <div class="card accent-green">
-        <div class="card-title" style="color: var(--green);">2. D-Pad & Pointercancel Safety</div>
-        <div class="card-body">• Responsive D-pad sending GET /api/drive.<br>• Sliding finger off button boundary triggers pointercancel.<br>• Motors halt immediately upon touch release.</div>
+        <div class="card-title" style="color: var(--green);">2. Audience Guest Driver (3:00–5:30)</div>
+        <div class="card-body">★ <b>AUDIENCE HANDS-ON: Guest drives car!</b><br>• Dedicated pre-loaded guest phone passed to audience.<br>• Guest experiences instant pointercancel brake firsthand.<br>• Room acts as the Human-in-the-Loop auditing team!</div>
       </div>
       <div class="card accent-red">
-        <div class="card-title" style="color: var(--red);">3. 500ms Watchdog Cutoff</div>
-        <div class="card-body">★ <b>CLIMAX: Airplane Mode Triggered!</b><br>• Wi-Fi severed; wheels LOCK INSTANTLY in &lt;0.5s!<br>• Serial 18pt alert: <code>WATCHDOG EMERGENCY STOP!</code><br>• Disable Airplane mode -&gt; /api/status auto-restores with zero MCU reboot.</div>
+        <div class="card-title" style="color: var(--red);">3. 500ms Watchdog Cutoff (5:30–8:00)</div>
+        <div class="card-body">★ <b>FULL-ROOM COUNTDOWN: 3, 2, 1—Cut!</b><br>• Wi-Fi severed; wheels LOCK INSTANTLY in &lt;0.5s!<br>• Serial 18pt alert: <code>WATCHDOG EMERGENCY STOP!</code><br>• Disable Airplane mode -&gt; /api/status auto-restores with zero MCU reboot.</div>
       </div>
     </div>
   </div>
