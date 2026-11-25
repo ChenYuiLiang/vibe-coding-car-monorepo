@@ -484,31 +484,31 @@ p10_1.font.color.rgb = C_CYAN_ACCENT
 p10_1.alignment = PP_ALIGN.CENTER
 
 p10_2 = tf10.add_paragraph()
-p10_2.text = 'Web BLE Controller ⟷ ESP32-C3 Robotic Vehicle'
+p10_2.text = 'Vehicle Wi-Fi HTTP Web Controller ⟷ ESP32-C3 Robotic Car'
 p10_2.font.size = Pt(22)
 p10_2.font.color.rgb = C_WHITE
 p10_2.alignment = PP_ALIGN.CENTER
 p10_2.space_before = Pt(16)
 
 p10_3 = tf10.add_paragraph()
-p10_3.text = 'Conducted live by Demo Tutors: Rui-Yu Lin & Yu-Ting Chen'
+p10_3.text = 'Primary Product Path (192.168.4.1) ｜ Live Demo Tutors: Rui-Yu Lin & Yu-Ting Chen'
 p10_3.font.size = Pt(16)
 p10_3.font.color.rgb = C_GRAY_MUTED
 p10_3.alignment = PP_ALIGN.CENTER
 p10_3.space_before = Pt(20)
 
 add_speaker_note(s10, '''[10:30 - 11:00] Rover:
-Now, talk is cheap—show me the code, and show me the physical car! I would like to invite our demo tutors, Rui-Yu Lin and Yu-Ting Chen, to demonstrate our full-stack system live on stage.''')
+Now, talk is cheap—show me the code, and show me the physical car! I'd like to invite our demo tutors, Rui-Yu Lin and Yu-Ting Chen, for a 3-minute live demonstration of our primary Wi-Fi HTTP product path.''')
 
 # ==================== SLIDE 11: Live Demo Action Breakdown ====================
 s11 = prs.slides.add_slide(blank_layout)
 set_slide_background(s11, C_GRAY_LIGHT)
-add_header(s11, 'Section 5: Live Demonstration (3 Minutes)', 'System Verification in Action')
+add_header(s11, 'Section 5: Live Demonstration (3 Minutes)', 'HIL System Verification: Wi-Fi HTTP & 500ms Watchdog')
 
 demo_steps = [
-    ('1. Zero-Install Web BLE Pairing', '• Tutor Rui-Yu opens Chrome on phone.\n• Clicks "Connect BLE" -> 1-sec pairing.\n• Vehicle LED locks solid blue; serial prints [BLE Connected, MTU=23].', C_BLUE_PRIMARY),
-    ('2. Differential Kinematic Dynamics', '• Canvas 2D joystick converts touch vectors (r, theta) to wheel speeds (VL, VR).\n• 50Hz binary packet streaming.\n• Smooth 360-degree zero-radius spin.', C_GREEN),
-    ('3. 500ms Watchdog Emergency Cutoff', '★ CLIMAX: Phone switched to Airplane Mode.\n• Connection abruptly severed.\n• Vehicle HALTS INSTANTLY (<0.5s)!\n• Serial flashes: WATCHDOG EMERGENCY STOP!', C_RED)
+    ('1. Primary Wi-Fi HTTP Path', '• Phone connects to Car SoftAP (192.168.4.1) with zero app install.\n• Browser activates ENGINE switch.\n• Transparent acrylic test stand ensures visible wheel motion with zero runaway risk.', C_BLUE_PRIMARY),
+    ('2. D-Pad & Pointercancel Safety', '• Responsive D-pad sending GET /api/drive.\n• Sliding finger off button boundary triggers pointercancel.\n• Motors halt immediately upon touch release.', C_GREEN),
+    ('3. 500ms Watchdog Cutoff', '★ CLIMAX: Phone switched to Airplane Mode!\n• Wi-Fi severed; wheels LOCK INSTANTLY in <0.5s!\n• Serial 18pt alert: WATCHDOG EMERGENCY STOP!\n• Disable Airplane mode -> /api/status auto-restores with zero MCU reboot.', C_RED)
 ]
 for i, (title, desc, color) in enumerate(demo_steps):
     left = Inches(0.8 + i * 4.0)
@@ -539,7 +539,11 @@ for i, (title, desc, color) in enumerate(demo_steps):
     p2.line_spacing = 1.3
 
 add_speaker_note(s11, '''[11:00 - 13:30] Rover Live Commentary:
-Notice how the phone connects via Web Bluetooth without installing any app. As Rui-Yu maneuvers the virtual joystick, binary packets stream at 50Hz with zero lag. And watch closely: when signal is lost, our 500ms Watchdog immediately clamps the motors, preventing runaway crashes. Thank you Rui-Yu and Yu-Ting! Back to our slides.''')
+[00:00-00:45] "Talk is cheap—let's verify the primary Wi-Fi HTTP product path with zero app installation."
+[00:45-01:30] "Notice the D-pad control and release-to-stop safety: sliding a finger off the button halts the wheels immediately."
+[01:30-02:15] "Now, the ultimate HIL test: What happens if Wi-Fi drops completely? Watch the 500ms firmware Watchdog fail-safe!"
+[02:15-02:45] "Without rebooting the board, disabling Airplane Mode restores telemetry via /api/status. BLE and Canvas remain optional labs."
+[02:45-03:00] "Thank you Rui-Yu and Yu-Ting! Let's map what we just saw to our 5-layer HIL Rubric."''')
 
 # ==================== SLIDE 12: Empirical Findings ====================
 s12 = prs.slides.add_slide(blank_layout)
