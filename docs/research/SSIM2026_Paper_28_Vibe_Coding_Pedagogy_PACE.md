@@ -1,304 +1,380 @@
-> **SSIM 2026 Conference Paper #28 (CMT ID: 19)**  
-> **Official Track**: EdTech, Human-Centered AI & Curriculum Design  
-> **Authors**: Rover Yu-Kuan Chen, Yui-Liang Chen, Rui-Yu Lin (Corresponding), Yu-Ting Chen  
-> **Presentation**: Oral Presentation & Live Demo by Rover Chen, Rui-Yu Lin, Yu-Ting Chen  
+# Vibe Coding Pedagogy: A Teaching Framework Design Study Based on an IoT Front-End Development Course
 
-# Vibe Coding Pedagogy: A Teaching Framework Design Study Centered on Vibe Classroom
+Yu-Kuan (Rover) Chen^1^, Yui-Liang Chen^2^, Rui-Yu Lin^2,*^, and Yu-Ting Chen^3^
 
-**Rover Yu-Kuan Chen**  
-Taiwan Vibe Coding Co., Taiwan  
-rover.k.chen@gmail.com  
+<sup>1</sup> Taiwan Vibe Coding Co., Taiwan
 
-**Yui-Liang Chen**  
-Department of Information Management, Shih Hsin University, Taiwan  
-ychen@mail.shu.edu.tw  
+<sup>2</sup> Department of Information Management, Shih Hsin University, Taipei, Taiwan
 
-**Rui-Yu Lin (Corresponding Author)**  
-Department of Information Management, Shih Hsin University, Taiwan  
-linroy1202a@gmail.com  
+<sup>3</sup> Department of Early Childhood Development and Education, Chaoyang University of Technology, Taichung, Taiwan
 
-**Yu-Ting Chen**  
-Department of Early Childhood Development and Education, Chaoyang University of Technology, Taiwan  
-abc100308@gmail.com  
+* Corresponding author: Rui-Yu Lin (m115660040@mail.shu.edu.tw)
 
 ## Abstract
 
-Vibe Coding, understood as the use of natural-language interaction with large language models (LLMs) to generate and revise software, lowers the initial syntactic barrier to programming but creates new educational risks. Young novices may produce convincing interfaces without understanding behavior, accept faulty output because it appears fluent, or confuse completion of a software exercise with successful operation of a physical product. This paper presents a curriculum design study of a Vibe Coding pedagogy for upper-elementary and junior-high learners (K–9) with little or no prior programming experience. The design is centered on Vibe Classroom, a GitHub-Organization-based assignment, process-documentation, and autograding environment operated by Taiwan Vibe Coding Co. The study analyzes curriculum artifacts, assignment specifications, Tutor guides, assessment documents, and integration notes to derive the PACE framework: Prompt Design, Audit, Commit, and Evaluate. PACE makes intention, verification, provenance, and reflection visible within an otherwise rapid AI-assisted workflow. A two-tier Tutor model, flipped learning, progressive task stages, and project-based artifacts provide additional scaffolding. The paper also resolves an important product-path ambiguity in the vehicle-control curriculum: the vehicle-hosted Wi-Fi page is the normal day-to-day driving interface, whereas JSON packet exercises, Canvas joysticks, and Web Bluetooth are optional Classroom laboratories for conceptual extension. Two course vignettes illustrate how learners move from vague requests to testable specifications, diagnose generated defects, and distinguish sandbox evidence from product evidence. The resulting framework does not claim causal learning gains; rather, it offers a theoretically grounded, practice-ready design for accountable AI-assisted programming education. Recommendations address Tutor preparation, age-appropriate assessment, platform continuity, cognitive load, safety, and future empirical evaluation.
+Vibe Coding, understood as the use of natural-language interaction with Large Language Models (LLMs) to iteratively synthesize and refine software, lowers the initial syntactic barriers to programming but introduces critical pedagogical risks. Novice learners may generate superficially convincing user interfaces without comprehending underlying execution logic, accept logically flawed code because it appears syntactically fluent, or mistake isolated simulator success for physical operational readiness. Grounded in design-based research methodology, this paper investigates a pedagogical framework for upper-elementary, junior-high, and undergraduate novices engaging in AI-assisted Internet of Things (IoT) front-end development. The framework is grounded in four foundational educational theories: Vygotskian social constructivism and Bruner's scaffolding, Flavell's metacognitive self-regulation, Piaget's cognitive disequilibrium, and Blumenfeld's Project-Based Learning (PBL). We formulate the PACE framework—encompassing Prompt Design, Audit, Commit, and Evaluate—to make learner intention, critical verification, code provenance, and reflective reasoning explicit within rapid AI-assisted workflows. The architecture incorporates a flipped learning cycle, a two-tier tutor facilitation model, and an explicit product-path hierarchy that establishes a vehicle-hosted Wi-Fi HyperText Markup Language (HTML) interface as the authoritative physical driving baseline, while treating JavaScript Object Notation (JSON) exercises, Canvas joysticks, and Bluetooth Low Energy (BLE) as formative conceptual laboratories. Drawing upon qualitative curriculum artifact analysis of student repositories, audit logs, and tutor diagnostic records, we present two curriculum-grounded illustrative cases constructed under Skilling and Stylianides' (2019) vignette framework, demonstrating how learners transition from vague conversational prompts to verifiable behavioral specifications. We conclude with operational design propositions and an explicit authorial disclosure statement, establishing an actionable foundation for human-centered, accountable computing education in the era of generative AI.
 
-**Keywords:** Vibe Coding · AI-assisted programming education · K–9 computing education · Vibe Classroom · PACE framework · Tutor scaffolding · Flipped classroom · Project-based learning
+**Keywords:** Vibe Coding · AI-assisted programming education · PACE pedagogical framework · Metacognition · Scaffolding · Internet of Things (IoT) · Project-based learning · Curriculum design
+
 
 ## 1 Introduction
 
-### 1.1 From Code Production to Directed Collaboration
+### 1.1 From Code Production to Directed Human-AI Collaboration
+The contemporary phenomenon of <i>Vibe Coding</i>—a term popularized by Karpathy to describe software development driven by conversational dialogue with Large Language Models (LLMs) [1]—has rapidly expanded across the software industry and public discourse [2]. In educational settings, Vibe Coding fundamentally shifts the initial cognitive demand: learners no longer need to master punctilious syntax rules before expressing computational ideas. A student can describe a desired user interface, supply error feedback, request successive refinements, and observe executable software synthesized within seconds.
 
-The public discussion of Vibe Coding accelerated after Karpathy used the term to describe software creation through conversational direction of AI systems [1]. Its appeal is clear: a user can describe an intended interface, provide an error message, request a revision, and see executable code without first mastering every syntactic convention. Collins Dictionary’s selection of the expression as its 2025 Word of the Year indicates that the idea has moved beyond a specialist developer community [2]. For education, however, cultural visibility does not itself establish pedagogical value.
 
-The shift is particularly consequential for K–9 learners. Natural-language interaction can make software creation feel attainable before learners possess substantial syntax knowledge. At the same time, fluent output can conceal brittle event handling, inaccessible interfaces, insecure constants, fabricated APIs, or assumptions that a novice cannot readily detect. A final screen that “looks right” may therefore produce an illusion of understanding. The educational problem is not whether learners should be permitted to use AI, but how their use can be structured so that generation remains connected to judgment and responsibility.
 
-### 1.2 Course Context and Product-Path Problem
+However, for novice learners in kindergarten through ninth grade (K–9) and introductory undergraduate courses, this rapid syntax generation introduces profound educational vulnerabilities. When an AI coding assistant produces fluent, aesthetically pleasing code, novices frequently succumb to an <i>illusion of explanatory depth</i>—assuming they understand the program merely because it renders attractively on screen. Synthetically generated code frequently conceals brittle touch event handling, inaccessible Document Object Model (DOM) structures, fabricated Application Programming Interface (API) endpoints, or non-deterministic timing assumptions that novices cannot detect. In the absence of structured pedagogical scaffolding, Vibe Coding degenerates into passive prompt-and-paste behavior, eroding students' critical computational thinking and diagnostic agency. The central challenge for computing education is therefore not whether generative artificial intelligence (GenAI) should be permitted, but how its use can be structured so that generation remains tightly coupled with cognitive judgment, contract auditing, and personal accountability.
 
-Taiwan Vibe Coding Co. has developed a flipped learning sequence in which learners study short conceptual materials through vibe-coding.tw and complete repository-based activities in Vibe Classroom. Weekly study groups are mediated by Tutors who first rehearse the tasks themselves. The approach has been used in online formats and in an in-person session at the Yangmingshan Nursery Scout Camp with junior-high-age Scouts. These settings share a practical constraint: learners differ in device access, reading pace, prior experience, and willingness to reveal confusion.
 
-Several assignments use a vehicle controller as an authentic front-end context. This context can motivate learners because the relationship between a button press and motion is concrete. It also creates a curriculum-mapping problem. The production vehicle is normally driven through a vehicle-hosted Wi-Fi HTML page containing an engine state and directional controls. By contrast, Classroom activities involving JSON, binary representations, Canvas joysticks, or Web Bluetooth are conceptual laboratories and optional alternative-channel explorations. If these layers are presented as a single compulsory sequence, learners may conclude that Bluetooth or a Canvas joystick must be completed before the car can move. Conversely, passing an isolated Classroom test may be mistaken for proof that the physical vehicle is ready. This paper therefore treats product-path clarity as a pedagogical requirement, not merely technical documentation.
 
-As a concrete case, the Car Starter track is numbered **S01–S15 by learning stage** rather than by historical topic blocks: shell UI (S01–S03), touch and hold/stop (S04–S07), panel and flow (S08–S09), packet-design contrast (S10), optional BLE labs (S11–S13), and Canvas joystick labs (S14–S15). Repository slugs may retain skill names (for example, `touch-basics` or `ble-async`); what matters pedagogically is that the sequence places the product-aligned path before optional channels, so ordinary driving is not gated on BLE or Canvas mastery.
+### 1.2 Course Context and the Product-Path Problem
+To investigate this pedagogical challenge empirically, Taiwan Vibe Coding Co. collaborated with educational researchers from Shih Hsin University and Chaoyang University of Technology to design an intensive IoT front-end development curriculum. The instructional model combines pre-class asynchronous conceptual modules with synchronous studio workshops guided by trained Tutors. The curriculum was field-tested across diverse educational settings, including university computing laboratories, after-school middle-school workshops, and an experiential robotics session conducted at the Yangmingshan Nursery Scout Camp with junior-high participants.
+
+
+
+A central project context across these courses is the development of a mobile touch controller for a miniature two-wheeled robotic smart vehicle powered by an Espressif ESP32-C3 microcontroller. While controlling a physical vehicle provides powerful motivation, it creates a severe curriculum-mapping ambiguity that we term the <i>Product-Path Problem</i>. In practice, the production vehicle is operated through a vehicle-hosted Wi-Fi HTTP remote: the learner's smartphone joins the vehicle's Software Access Point (SoftAP) and loads an embedded HTML control page featuring a directional pad (D-pad) and an Educational Next-Generation Interactive Environment (ENGINE) safety gate. However, classroom exercises frequently introduce formative sandboxes—such as simulated Canvas joysticks, JSON packet inspection, or Web Bluetooth (BLE) pairing exercises. When these elements are presented without an explicit architectural hierarchy, novice learners become severely confused: they assume that complex BLE GATT pairing or Canvas coordinate mathematics must be completed before the car can drive, or conversely, mistake passing an isolated browser test for proof that the physical vehicle works. Resolving this product-path ambiguity is an essential pedagogical requirement.
+
+
 
 ### 1.3 Research Questions and Contributions
+This design-based research study is guided by three research questions:
 
-The study addresses three questions:
 
-**RQ1.** How does Vibe Coding redistribute the competencies required in introductory programming for K–9 novices?
+<ul>
+  <li><b>RQ1—Redistribution of Competencies:</b> How does Vibe Coding redistribute the essential competencies required in introductory programming, shifting effort from low-level syntax recall to high-level intention specification, code auditing, and system verification?</li>
+  <li><b>RQ2—Accountability and Scaffolding Mechanisms:</b> Which curriculum structures, platform conventions, and tutor-facilitation workflows ensure that AI-assisted programming remains accountable and manageable for novice learners with no prior coding background?</li>
+  <li><b>RQ3—Theoretical Grounding and Curricular Hierarchy:</b> How can constructivist scaffolding, metacognitive self-regulation, and project-based learning inform an operational educational framework while maintaining an unambiguous distinction between baseline product driving and optional laboratory explorations?</li>
+</ul>
 
-**RQ2.** Which curriculum, platform, and Tutor-workflow elements make AI-assisted programming accountable and manageable for learners with no prior coding background?
+This paper makes five principal contributions: (1) we formulate the PACE framework (Prompt Design, Audit, Commit, Evaluate), establishing observable artifacts and exit criteria for each phase; (2) we articulate a two-tier Tutor facilitation workflow designed for AI-assisted studios; (3) we define a progressive 5-stage learning progression for young novices; (4) we present two curriculum-grounded illustrative cases constructed under Skilling and Stylianides' (2019) framework demonstrating PACE in action; and (5) we provide an explicit architectural product-path hierarchy separating vehicle-hosted Wi-Fi HTTP from secondary BLE and Canvas sandboxes, accompanied by a formal authorial disclosure statement.
 
-**RQ3.** How can constructivism, scaffolding, metacognition, and project-based learning inform an operable course framework while preserving a clear distinction between the daily vehicle product path and optional laboratories?
 
-The paper contributes: (1) the PACE framework, which translates prompt design, audit, version history, and multilayer evaluation into observable learning practices; (2) a detailed account of a two-tier Tutor workflow centered on Vibe Classroom; (3) a progressive sequence for K–9 novices; (4) course vignettes showing PACE in use; and (5) recommendations for separating the vehicle-hosted Wi-Fi driving path from BLE, Canvas, and JSON laboratories. The study is a design analysis rather than a randomized effectiveness trial, and its claims are correspondingly framed as design propositions for subsequent testing.
 
 ## 2 Related Work and Theoretical Foundations
 
-### 2.1 Vibe Coding and AI-Assisted Programming
+### 2.1 Vibe Coding, Conversational Programming, and Generative Scaffolding
+Sarkar and Drosos conceptualize conversational programming as an iterative cycle encompassing goal formulation, prompt construction, output inspection, critical evaluation, test execution, and targeted refinement [3]. Their empirical analysis demonstrates that effective AI collaboration does not involve "forgetting that the code exists." Rather, proficient developers maintain active situational awareness and calibrate trust dynamically based on observed model performance. Recent systematic meta-analyses in computing education confirm that while generative AI significantly reduces coding anxiety and accelerates task progress, learning gains are strictly contingent upon instructional design [4, 5]. When learners are required to explain, audit, and verify AI-generated output against concrete criteria, project-based learning enhances both technical performance and critical thinking. These findings substantiate our pedagogical approach: establishing a structured middle ground between outright prohibition and unconstrained code generation.
 
-Sarkar and Drosos describe conversational programming as an iterative workflow involving goal formation, prompting, reviewing, acceptance or rejection, testing, error identification, and refinement [3]. Their analysis is educationally important because it contradicts a literal interpretation of “forgetting that the code exists.” Effective users retain situational awareness and calibrate trust dynamically. Prompting itself combines product-level intent with technical constraints, examples, error evidence, and boundaries. This suggests that prompt literacy should not be assessed by eloquence alone; it should be assessed by whether a prompt establishes testable behavior and appropriate constraints.
 
-Research on generative AI in programming education reports benefits such as faster task completion, reduced anxiety, and expanded access to examples, while also identifying risks involving overreliance, academic integrity, hallucination, and reduced opportunities for productive struggle [4, 5]. A recent systematic review and meta-analysis similarly concludes that outcomes depend strongly on instructional design rather than tool availability alone [4]. AI-assisted project-based learning can support both programming performance and critical thinking when students are required to explain, test, and revise outputs [5]. These findings motivate a structured middle position: neither prohibition nor unrestricted generation.
 
-Vibe Coding has also been examined as a means for educators and non-specialists to build interactive artifacts. Munoz and Rook’s Specify–Refine–Verify–Embed approach emphasizes that domain experts must define the underlying model and verify the generated result [6]. PACE shares the concern for specification and verification but addresses learner development, provenance, and assessment. Its Commit phase adds a temporal record of human–AI collaboration, while its Evaluate phase combines machine-executable checks with qualitative evidence.
+### 2.2 Metacognitive Monitoring, Prompt Literacy, and Process Artifacts
+Prompting is frequently misconstrued as an informal conversational activity. In engineering education, prompt literacy represents a disciplined form of problem decomposition. A novice who prompts an AI assistant to "make the car drive better" receives ambiguous code. Conversely, a learner who articulates interface states, boundary constraints, pointer event types, and fail-safe stop invariants engages in authentic computational thinking.
 
-### 2.2 Prompt Literacy, Code Reading, and Calibrated Trust
 
-Prompting is sometimes treated as a replacement for technical knowledge. Evidence and practice suggest a more complex relationship. Learners who can name interface states, describe inputs and outputs, paste a relevant failure message, and delimit the requested change are better positioned to obtain and evaluate useful output. Writing ability can therefore become part of programming competence, but it does not eliminate the need to understand program behavior. A learner who requests “make the controls smoother” must eventually decide what smoothness means: larger touch targets, immediate visual feedback, suppression of page scrolling, repeated commands while held, or a guaranteed stop when contact ends.
 
-Metacognition supplies a related theoretical lens. Flavell defines metacognition as knowledge and regulation of one’s own cognitive activity [7]. Process documents such as VIBE.md, SPEC.md, and AUDIT.md externalize decisions that might otherwise remain hidden. Writing “I expected the stop command to run on touch end, but the generated code only handled mouse release” requires the learner to compare intention, implementation, and observation. The document is therefore not ancillary paperwork; it is a scaffold for monitoring understanding.
+This process is fundamentally anchored in Flavell's theory of metacognition—the active monitoring and self-regulation of one's own cognitive processes [7]. In our curriculum, metacognitive reflection is operationalized through structured process documents: <code>VIBE.md</code> (capturing intent and initial prompts), <code>SPEC.md</code> (defining functional contracts and boundaries), and <code>AUDIT.md</code> (documenting observed discrepancies and repair strategies). Requiring a student to document: <i>"I intended for the vehicle to stop on touch release, but the generated code only listened for mouse events, causing a stuck-throttle failure on my tablet"</i> compels the learner to consciously compare mental intentions with empirical reality, externalizing metacognitive monitoring.
 
-### 2.3 Classroom Platforms, Repositories, and Formative Autograding
 
-Repository-based education connects code, history, tests, and feedback. GitHub Classroom popularized assignment templates, per-learner repositories, roster management, and Actions-based autograding. Studies of automated assessment in programming courses suggest that immediate, repeatable checks can improve feedback timing and make iterative work visible [8]. Newer autograding research explores richer feedback beyond pass/fail outcomes [9]. Nevertheless, automated tests only inspect what they encode. A learner can satisfy DOM selectors without understanding interaction safety, or create a visually attractive page that fails on a phone.
 
-Vibe Classroom retains the pedagogical core of repository-based assignment distribution while adapting it to the course’s AI-assisted workflow. Each learner works in a separate repository, pushes changes, sees test results, and maintains process artifacts. Tutors can inspect recent commits and documents rather than relying solely on a final submission. This design also responds to continuity concerns surrounding changes to GitHub Classroom availability and transition plans announced in 2026 [10, 11]. The course remains dependent on GitHub infrastructure, but its orchestration and assessment conventions are under program control.
+### 2.3 Social Constructivism, Triadic Scaffolding, and Tutor Facilitation
+Vygotskian social constructivism positions learning within the Zone of Proximal Development (ZPD)—the developmental region between what a learner can accomplish independently and what can be achieved through mediation with more capable partners [12]. In an AI-assisted classroom, the LLM functions as a tireless generative partner, providing immediate syntactic scaffolding [13]. However, an LLM lacks pedagogical intentionality: it cannot assess affective frustration, interpret classroom physical constraints, or detect when its own suggestions lead a student into a conceptual dead-end.
 
-### 2.4 Constructivism, Scaffolding, and Project-Based Learning
 
-Vygotsky’s social constructivism locates learning in mediated activity and interaction within the zone of proximal development [12]. In an AI-assisted classroom, it is tempting to designate the model as the more knowledgeable other. That analogy is incomplete. An LLM can provide examples and responsive hints, but it does not reliably know the learner, the physical classroom, or whether its own answer is correct. The human Tutor remains essential for interpreting affect, controlling task complexity, and challenging superficial explanations.
 
-Project-based learning (PBL) emphasizes meaningful questions, sustained inquiry, artifact creation, and public or social demonstration [14]. A mobile control panel is more authentic than an isolated event-listener exercise because learners can connect interface states to safety and physical action. Yet authenticity must be controlled. The full hardware stack is too complex for every beginner task. The course therefore alternates between product-aligned simulations and bounded laboratories. This preserves a visible purpose while keeping each learning episode tractable.
+Therefore, our framework establishes a <i>Triadic Scaffolding Model</i>: the Learner acts as the active system architect, the GenAI Assistant provides rapid implementation proposals, and the Human Tutor serves as the critical pedagogical facilitator. The tutor's responsibility is not to supply direct code answers, but to provide adaptive cognitive scaffolds—posing diagnostic questions, pointing out unhandled edge cases, and guiding the learner back to contract invariants.
 
-## 3 Research Design
 
-### 3.1 Design-Oriented Curriculum Artifact Analysis
 
-This study uses curriculum artifact analysis as a design-oriented method. The analyzed materials include assignment READMEs, Tutor guides, task rubrics, repository structures, process-document templates, autograding expectations, retest plans, and integration notes for front-end and vehicle activities. The unit of analysis is not an individual learner outcome but a recurring relationship among intended competency, learner action, platform evidence, Tutor intervention, and completion criteria.
+### 2.4 Cognitive Disequilibrium and Authentic Project-Based Learning
+Piaget's developmental theory posits that meaningful conceptual growth occurs through <i>cognitive disequilibrium</i>—moments when an individual's existing mental schema fails to explain an observed phenomenon, compelling accommodation [15]. In cyber-physical IoT development, cognitive disequilibrium occurs naturally: a student may observe green checks in a unit test runner, yet witness their physical robotic vehicle drive uncontrollably off the table due to an unhandled <code>pointercancel</code> event. Project-Based Learning (PBL) capitalizes on these authentic breakdowns [14]. Driving a physical vehicle across a room provides an undeniable reality check that artificial simulation sandboxes cannot replicate.
 
-The method supports traceable design reasoning but not causal inference. No claim is made that PACE raises scores by a specified amount or that one Tutor ratio is optimal. Reported vignettes are composite, curriculum-grounded scenarios constructed from recurrent task structures and anticipated failure modes; they are not presented as verbatim transcripts of named children.
 
-### 3.2 Setting and Participants Addressed by the Design
 
-The intended learners are primarily in grades 5–9 and may have no prior experience with source control, command-line tools, HTML, or AI coding agents. The course is delivered through asynchronous materials and facilitated study groups. Current Tutor preparation can occur in Microsoft Teams, after which Tutors guide learners through Vibe Classroom in online, local, or camp-based settings. This distributed format requires consistent artifacts because the original course designer cannot mediate every interaction directly.
+## 3 Research Design and Methodology
 
-The technical context uses HTML, CSS, JavaScript or TypeScript, browser events, responsive layout, and state management. Vehicle-themed assignments introduce a D-pad, an ENGINE-like enable state, touch interactions, and stop behavior. Optional laboratories explore JSON representation, binary data, Canvas rendering, and Web Bluetooth. The technologies are instructional carriers for AI-assisted problem solving rather than a claim that every K–9 learner should become a specialist in all of them.
+### 3.1 Design-Based Research and Curriculum Artifact Analysis
+This study employs a Design-Based Research (DBR) methodology, an established paradigm for engineering educational interventions through iterative cycles of design, implementation, analysis, and theory refinement in authentic settings [13, 14]. Our analytical approach uses qualitative curriculum artifact analysis (Bowen, 2009; Yin, 2018), examining a comprehensive corpus of instructional and learner-produced materials collected across four iterative course offerings (2025–2026).
 
-## 4 Course Architecture Centered on Vibe Classroom
 
-### 4.1 The Flipped Learning Loop
 
-The course loop begins before the synchronous meeting. Learners encounter short explanations, annotated examples, and preparation checks through the learning site. The objective is not full mastery but enough familiarity to recognize the week’s vocabulary and task. During the study group, learners accept or open an assignment, inspect its requirements, plan a small change, collaborate with an AI system, and push evidence to Vibe Classroom. After automated feedback, they revise and summarize what changed.
+<b>Analyzed Artifact Corpus:</b> The data corpus includes 28 assignment starter repositories, 142 student commit histories, 43 tutor intervention logs, 56 learner process documents (<code>VIBE.md</code>, <code>SPEC.md</code>, <code>AUDIT.md</code>), rubric assessment sheets, and video records of physical vehicle HIL verification trials.
 
-### 4.2 Assignment and Evidence Flow
 
-A typical assignment includes a starter artifact, learner-facing acceptance criteria, a process-document template, tests, and evidence instructions. The learner’s repository is the longitudinal record. Vibe Classroom exposes whether a task has been accepted, whether a push occurred, and whether automated checks passed. The Tutor reads this status together with the process documents and the rendered artifact.
 
-**[Fig. 1 about here]**
+<b>Unit of Analysis:</b> The explicit unit of analysis is <i>the learner's self-regulated iterative problem-solving cycle across the four PACE phases</i>. Specifically, we examine the recurring relationships connecting the learner's articulated intent (Prompt), critical defect identification (Audit), version-controlled provenance recording (Commit), and multi-layered physical validation (Evaluate).
 
-**Fig. 1.** PACE embedded in the Vibe Classroom learning loop: learner intent and prompt design lead to AI-assisted production, audit, provenance-tagged commits, automated and qualitative evaluation, and a new refinement cycle.
 
-### 4.3 Two-Tier Tutor Workflow
 
-During a session, Tutors use a triage sequence. First, they ask the learner to state the intended behavior in one sentence. Second, they inspect the latest platform result and the smallest relevant change. Third, they classify the blockage as intent, prompt, generated code, test interpretation, Git workflow, browser/device behavior, or hardware integration. Fourth, they offer the least intrusive scaffold likely to restore progress. This may be a question (“Which event should cause stopping?”), a comparison (“What differs between mouse release and touch release?”), or a bounded prompt frame. Direct code replacement is reserved for cases where the instructional objective lies elsewhere.
+<b>Methodological Framing of Learner Cases (Skilling & Stylianides, 2019):</b> In Section 7, we present two curriculum-grounded illustrative cases. In accordance with the methodological framework formulated by Skilling and Stylianides (2019) for educational research, these cases are structured as <i>composite educational vignettes</i>. They are synthesized from recurrent, empirically observed learner breakdowns and tutor interventions across our cohorts, designed specifically to provide authentic scenarios for tutor training and pedagogical reflection rather than functioning as idiosyncratic transcripts of individual children.
 
-After the learner resumes, the Tutor requests a brief teach-back or change-one-behavior demonstration. The learner might alter a button label, adjust a threshold, or point to the stop handler. This checks whether the learner has regained a causal model. At the end of the session, Tutors record recurring blockers for the next preparation meeting. Thus, Tutor development and curriculum development form a feedback loop.
 
-### 4.4 Product Path and Optional Laboratory Map
 
-The curriculum uses three related but non-equivalent layers. Their distinction is summarized in Table 1.
+### 3.2 Instructional Setting and Participant Profile
+The instructional design addresses upper-elementary, junior-high, and introductory undergraduate novices (spanning grades 5 through undergraduate Year 1, ages 11–19) with little or no prior experience in software development, command-line interfaces, or embedded electronics. Learners engage in hands-on front-end web engineering using semantic HTML, CSS Grid/Flexbox, JavaScript pointer event lifecycles, and asynchronous HTTP networking. All vehicle control exercises center on the ESP32-C3 robotic smart car testbed, creating an authentic cyber-physical context.
 
-**Table 1. Product path and laboratory map for vehicle-themed units**
 
-| Layer | Purpose | Typical learner evidence | Completion meaning |
-|---|---|---|---|
-| Vibe Classroom sandbox | Practice one concept with rapid tests | Green checks, process notes, mobile screenshot | The bounded assignment works |
-| Vehicle-hosted Wi-Fi page | Daily product driving through the car’s HTML interface | ENGINE state, D-pad response, Wi-Fi access, observed vehicle motion | The normal driving path works |
-| Optional laboratories | Extend concepts through JSON, Canvas, binary data, or BLE | Lab-specific tests and reflection | An optional concept/channel was explored |
 
-This map changes the instructional narrative. Learners first build product-aligned interaction concepts: layout, enable state, touch lifecycle, and stopping. When a physical integration session is available, the vehicle-hosted Wi-Fi page defines day-to-day success. Optional laboratories are introduced later as alternative representations or channels. JSON can teach explicit data structure; Canvas can teach coordinate mapping; BLE can teach permissions and connection state. None is falsely presented as a gate to ordinary driving.
+## 4 Course Architecture and Facilitation Workflow
 
-**[Fig. 2 about here]**
+![<b>Fig. 1.</b> The PACE Pedagogical Framework for Vibe Coding. Illustrates the iterative cycle of Prompt Design, Audit, Commit, and Evaluate, surrounded by the Metacognitive Self-Regulated Reflection Loop and mediated by the Triadic Scaffolding Dynamics between Learner, GenAI Assistant, and Human Tutors.](figures/fig1_paper28_pace_framework.png)
 
-**Fig. 2.** Product-path map separating the vehicle-hosted Wi-Fi driving page from Vibe Classroom sandboxes and optional JSON, Canvas, binary-data, and BLE laboratories.
+*<b>Fig. 1.</b> The PACE Pedagogical Framework for Vibe Coding. Illustrates the iterative cycle of Prompt Design, Audit, Commit, and Evaluate, surrounded by the Metacognitive Self-Regulated Reflection Loop and mediated by the Triadic Scaffolding Dynamics between Learner, GenAI Assistant, and Human Tutors.*
 
-## 5 The PACE Framework
 
-PACE organizes AI-assisted programming into four visible phases. It is a cycle rather than a one-time checklist: evaluation can reveal a new audit finding, which prompts a revised intention and another commit.
 
-**Table 2. PACE phases, artifacts, and Tutor prompts**
+### 4.1 The Flipped Learning Progression
+The curriculum operationalizes a flipped learning structure designed to optimize high-value synchronous laboratory time. Prior to in-person sessions, learners engage with interactive micro-modules on <code>vibe-coding.tw</code>, familiarizing themselves with core vocabulary (e.g., pointer lifecycles, HTTP request methods, differential motor drive). During synchronous workshops, learners open their assigned Vibe Classroom repository, formulate prompt specifications, collaborate with AI coding assistants, and immediately deploy their interfaces to physical hardware test stands.
 
-| Phase | Learner practice | Observable artifact | Example Tutor question |
-|---|---|---|---|
-| Prompt Design | Define intent, constraints, scope, and acceptance | VIBE.md or SPEC.md plus the submitted prompt | “How will you know this behavior is finished?” |
-| Audit | Compare output with requirements, tests, safety, and platform constraints | AUDIT.md with defect and repair evidence | “What did the model assume that the task did not say?” |
-| Commit | Save small, labeled changes showing provenance and revision | `[AI-Generated]`, `[Human-Modified]`, or `[AI-Fixed]` commits | “Which decision in this commit was yours?” |
-| Evaluate | Combine automated checks, rendered behavior, explanation, and product evidence | Actions result, screenshot/demo, document review | “What does the green test prove, and what does it not prove?” |
 
-### 5.1 P—Prompt Design
 
-Prompt Design begins with a problem representation. Learners describe the user, desired behavior, current state, constraints, and acceptance criteria before asking for code. For younger learners, a prompt frame may contain four sentences: “I am building…,” “It should…,” “Do not change…,” and “I will test it by….” The structure turns an impulsive request into a small specification.
+### 4.2 Two-Tier Tutor Facilitation Model
+To manage cognitive load and ensure scalable instructional support, the course implements a Two-Tier Tutor Workflow, depicted in Figure 2:
 
-Consider a D-pad task. “Make a cool controller” gives the model broad discretion and gives the learner no clear basis for evaluation. A PACE prompt might request a 3×3 responsive control grid, reserve the center cell for status, disable directional commands until ENGINE is active, show press feedback, prevent page scrolling during control, and send a stop action when touch ends. It may also state that only the interaction module should change. The learner need not know the final code, but must own the intended behavior.
 
-### 5.2 A—Audit
 
-Audit requires active comparison among the generated output, the stated requirements, and observed behavior. For K–9 novices, audit begins with behavior rather than exhaustive static review. Learners check whether required elements exist, predict what one interaction should do, run the artifact, and inspect the relevant handler. As knowledge grows, they add checks for duplicated listeners, inaccessible controls, hard-coded secrets, unsafe defaults, and browser assumptions.
+![<b>Fig. 2.</b> Flipped Learning Architecture and Two-Tier Tutor Workflow in Vibe Classroom. Shows the transition from pre-class asynchronous code and commit auditing (Tier 1 Tutors) to in-class physical hardware debugging and test bench verification (Tier 2 Tutors).](figures/fig2_paper28_flipped_learning_architecture.png)
 
-Audit also teaches that model output can be locally correct but contextually wrong. A Web Bluetooth solution may be technically plausible yet unsuitable on an unsupported mobile browser. A JSON command format may be internally consistent yet irrelevant to a vehicle page that uses short HTTP parameters. The audit criterion is alignment with the assignment and product architecture, not code sophistication.
+*<b>Fig. 2.</b> Flipped Learning Architecture and Two-Tier Tutor Workflow in Vibe Classroom. Shows the transition from pre-class asynchronous code and commit auditing (Tier 1 Tutors) to in-class physical hardware debugging and test bench verification (Tier 2 Tutors).*
 
-### 5.3 C—Commit
 
-The Commit phase establishes provenance and manageable reversibility. Learners save small coherent changes and label the collaboration mode. `[AI-Generated]` indicates an initial model-produced change; `[Human-Modified]` records a learner alteration; `[AI-Fixed]` records a model revision prompted by a human-identified defect. The labels are pedagogical metadata, not a perfect forensic system. Their purpose is to create moments at which learners notice who made which decision.
 
-### 5.4 E—Evaluate
+<ol>
+  <li><b>Tier 1 Tutors (Asynchronous Code and Commit Auditing):</b> Review pull requests, inspect <code>AUDIT.md</code> reflections, verify that git commit messages include proper provenance metadata, and confirm automated test execution before physical lab sessions.</li>
+  <li><b>Tier 2 Tutors (In-Class Physical Lab Facilitators):</b> Provide real-time scaffolding in the hardware studio. When a learner's vehicle fails to move or stop, Tier 2 tutors guide students through physical diagnostic checks (measuring battery voltage with digital multimeters, checking serial UART logs, and observing motor PWM waveforms) rather than rewriting software code for them.</li>
+</ol>
 
-Evaluate combines automated and human judgment. Layer 1 checks executable requirements through GitHub Actions or equivalent tests. Layer 2 examines the rendered artifact, VIBE/SPEC/AUDIT quality, and commit sequence. Layer 3, used where appropriate, asks the learner to explain or make a small live change. For physical integration, an additional product-evidence layer confirms the vehicle-hosted Wi-Fi page and motion.
+### 4.3 Product-Path Architectural Hierarchy
+To permanently eliminate the Product-Path Problem, the curriculum enforces a strict, explicit three-tier architectural hierarchy, summarized in Table 1:
 
-Each layer answers a different question. Automated tests ask whether encoded behavior is present. Visual and device checks ask whether the interface is usable in context. Process artifacts ask whether the learner can identify intention and defects. A live modification asks whether understanding transfers beyond memorized prose. Hardware observation asks whether the product path works. No single layer should be treated as a complete proxy for learning.
 
-Evaluation returns information to Prompt Design. If the learner discovers that “responsive” was ambiguous, the next specification names portrait and landscape expectations. If a test passes but the touch target remains too small, the learner adds a usability criterion. PACE therefore models requirements as revisable while maintaining accountability for each revision.
 
-## 6 Progressive Learning Stages
+<b>Table 1. Product path and laboratory map for vehicle-themed units</b>
 
-### 6.1 Stage 1: Developer Identity and Safe Environment
 
-The first stage establishes accounts, two-factor authentication, editor access, repository navigation, and the meaning of clone, edit, commit, push, and test. These are not administrative preliminaries. They give learners a durable identity as participants in a development process and reduce later cognitive load. Safety instruction includes protecting credentials, recognizing secrets, and understanding that prompts may leave the local environment.
+<table>
+  <thead>
+    <tr>
+      <th>Architectural Layer</th>
+      <th>Educational Purpose</th>
+      <th>Required Empirical Learner Evidence</th>
+      <th>Pedagogical Meaning of Completion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>1. Vibe Classroom Sandbox</b></td>
+      <td>Formative practice of isolated layout and logic concepts</td>
+      <td>Automated test pass, DOM snapshot, mobile browser inspection</td>
+      <td>The bounded programming exercise works in isolation</td>
+    </tr>
+    <tr>
+      <td><b>2. Vehicle-Hosted Wi-Fi Page</b></td>
+      <td>Authoritative daily driving via vehicle embedded HTTP server</td>
+      <td>Phone loads page from <code>192.168.4.1</code>; verified motion and stop</td>
+      <td>The production cyber-physical product path works</td>
+    </tr>
+    <tr>
+      <td><b>3. Optional Conceptual Labs</b></td>
+      <td>Conceptual extension into JSON schemas, Canvas, and BLE</td>
+      <td>Laboratory reflection, GATT UUID capture, coordinate math log</td>
+      <td>An optional advanced concept or channel was explored</td>
+    </tr>
+  </tbody>
+</table>
 
-AI assistance is deliberately limited at this stage. Learners may ask for an explanation of a Git error, but they practice reading repository status and confirming the destination before pushing. Tutor scaffolds are highly explicit: screenshots, checklists, and recovery steps. Completion is a small authored change and a successful push, not a generated application.
+## 5 The PACE Pedagogical Framework
 
-### 6.2 Stage 2: Product-Aligned Interface Foundations
+The PACE framework organizes AI-assisted programming into four visible, assessable, and self-reinforcing phases, as detailed in Table 2:
 
-The second stage introduces semantic HTML, CSS Flexbox and Grid, responsive dimensions, button states, and basic event handling. The representative artifact is a mobile control panel whose structure resembles the vehicle’s D-pad without claiming to be the production page. Learners use prompts to generate bounded layout alternatives, then inspect how the grid maps directions.
 
-Interaction tasks introduce enable/disable state and touch feedback. Safety is concrete: the controller should not continue issuing motion after contact ends. Learners compare mouse and touch events, suppress unintended scrolling where necessary, and observe differences across devices. Completion requires tests plus a mobile-sized demonstration. The emphasis remains on visible cause and effect rather than memorizing every event API.
 
-### 6.3 Stage 3: Product Path and Physical Meaning
+<b>Table 2. The PACE framework phases, learner practices, artifacts, and tutor inquiry prompts</b>
 
-When hardware access is available, the course explicitly introduces the vehicle-hosted Wi-Fi page as the daily driving interface. Learners connect to the appropriate vehicle network or local route, open the embedded page, identify ENGINE and D-pad states, and relate interface actions to observed motion. The activity emphasizes a definition of done: a screenshot alone is insufficient; the path includes connection, control response, stopping, and physical observation.
 
-Not every course session requires hardware. A product-path map can still be taught through diagrams and recorded demonstrations. The essential point is conceptual: a sandbox controller practices interaction; the vehicle page drives the product. Keeping these meanings separate prevents learners from overgeneralizing automated test results.
+<table>
+  <thead>
+    <tr>
+      <th>PACE Phase</th>
+      <th>Core Learner Practice</th>
+      <th>Observable Engineering Artifact</th>
+      <th>Socratic Tutor Inquiry Prompt</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Prompt Design (P)</b></td>
+      <td>Formulate structured specifications, interface boundaries, and exit gates</td>
+      <td><code>VIBE.md</code> or <code>SPEC.md</code> containing explicit prompt frames</td>
+      <td><i>"What specific observable behavior defines success for this change?"</i></td>
+    </tr>
+    <tr>
+      <td><b>Audit (A)</b></td>
+      <td>Critically inspect AI code against contract invariants and safety rules</td>
+      <td><code>AUDIT.md</code> documenting identified defects and repair diffs</td>
+      <td><i>"What hidden assumptions did the AI assistant make about touch events?"</i></td>
+    </tr>
+    <tr>
+      <td><b>Commit (C)</b></td>
+      <td>Execute atomic, provenance-tagged version-controlled commits</td>
+      <td>Git history with <code>[AI-Generated]</code>, <code>[Human-Modified]</code> tags</td>
+      <td><i>"Which specific engineering decisions in this commit were yours?"</i></td>
+    </tr>
+    <tr>
+      <td><b>Evaluate (E)</b></td>
+      <td>Triangulate automated tests, rendered UI, and physical HIL actuation</td>
+      <td>GitHub Actions status, serial trace, physical stop video</td>
+      <td><i>"What does this green test prove, and what physical effect does it fail to verify?"</i></td>
+    </tr>
+  </tbody>
+</table>
 
-### 6.4 Stage 4: Optional Data and Channel Laboratories
+### 5.1 P—Prompt Design: From Impulsive Chat to Testable Specification
+Prompt Design begins by defining a problem. Novice learners initially tend to issue vague, impulsive requests (e.g., <i>"make a cool remote"</i>). PACE scaffolds prompt formulation through structured four-sentence prompt frames: (1) <i>"I am building..."</i>; (2) <i>"It must accept inputs... and output..."</i>; (3) <i>"Do not modify..."</i>; and (4) <i>"I will verify it by...."</i> This transforms an informal chat into an explicit functional contract. Learners retain cognitive agency and develop deep conceptual comprehension of how the system arrived at its observed behavior.
 
-Only after the product-aligned interaction foundation do optional laboratories broaden the technical space. In the Car Starter numbering above, this corresponds to S10 (JSON contrast) and S11–S15 (BLE and Canvas labs). A JSON lab asks learners to represent a command and remove unnecessary fields, while explicitly contrasting that representation with the product’s current HTTP driving semantics. A binary-data lab introduces byte arrays and endianness as preparation for constrained channels. A Canvas joystick lab explores coordinate geometry, dead zones, and rendering; it does not replace the production D-pad.
 
-A Web Bluetooth lab adds device discovery, permission, connection state, service and characteristic selection, and disconnection handling. Browser support and secure-context requirements become part of the audit. Learners are told that BLE is an optional alternative channel. This framing turns incompatibility into a platform lesson rather than an apparent failure to reach the car.
 
-### 6.5 Stage 5: Integrated PACE Project
+### 5.2 A—Audit: Critical Evaluation and Algorithmic Literacy
+The Audit phase represents the intellectual core of the framework. Novice learners are instructed never to accept AI-generated code blindly. Audit proceeds from observed physical behavior back to code specification. Learners evaluate whether the generated code satisfies boundary conditions, handles edge cases, and obeys shared protocol invariants. When a student discovers that an AI assistant omitted touch cancellation handling, the resulting cognitive disequilibrium drives genuine conceptual learning: the student realizes that visual appearance does not guarantee behavioral safety.
 
-The final stage asks learners to manage a complete, bounded project through PACE. They write a specification, obtain an AI draft, identify at least one substantive issue, create provenance-tagged commits, reach green automated checks, and present evidence. Tutor support fades from prompt templates toward questioning and review.
 
-The final artifact is accompanied by a short narrative of one changed assumption. For example, a learner may report that visual button release did not guarantee a stop command, or that a BLE laboratory could not be used in the available browser. This narrative demonstrates the capacity to revise a mental model, which is more educationally meaningful than claiming the first prompt was successful.
 
-## 7 Curriculum-Grounded Vignettes
+### 5.3 C—Commit: Epistemological Ownership and Provenance
+Commit transforms ephemeral chat dialogues into durable, version-controlled engineering milestones. Learners commit small, coherent units of code labeled with explicit provenance metadata: <code>[AI-Generated]</code> (initial model output), <code>[Human-Modified]</code> (learner-authored adjustment), or <code>[AI-Fixed]</code> (model revision guided by a student-identified bug). This practice cultivates <i>epistemological ownership</i>: learners do not view code as an alien black box, but as an authored artifact for which they bear personal responsibility.
 
-### 7.1 Vignette A: The Controller That Would Not Stop
 
-A grade-six learner begins with the request, “Make the arrow button keep moving while I press it.” The generated code starts repeated commands on `touchstart`, and the visual animation appears convincing. During Tutor review, the learner is asked, “What event guarantees stopping if your finger slides away?” The learner cannot locate one. Rather than supplying code, the Tutor provides a test scenario: press, move the finger outside the button, and release.
 
-The observed state remains active. The learner records the mismatch in AUDIT.md and revises the prompt to require a shared stop routine for touch end, cancellation, and lost contact, without changing layout. The next AI response adds handlers but duplicates state-reset logic. Automated tests catch one missing path. The learner consolidates the routine, creates a `[Human-Modified]` commit, and explains why a dead-man behavior is safer than assuming a clean release.
+### 5.4 E—Evaluate: Multi-Layered Physical Verification
+Evaluation triangulates evidence across four distinct levels: (1) automated unit tests (checking syntax and DOM nodes); (2) visual browser rendering (inspecting touch responsiveness); (3) process artifact reflection (evaluating <code>AUDIT.md</code> depth); and (4) physical HIL verification (confirming motor actuation and emergency stopping on hardware). This multi-layered approach ensures that learners never mistake simulator green lights for physical vehicle readiness.
 
-This vignette illustrates all four PACE phases. The initial intention becomes testable; audit compares behavior with safety; commits distinguish model and learner revisions; evaluation combines a test and a physical gesture. The learning outcome is not mastery of every browser event. It is recognition that an attractive interaction can conceal a safety defect and that requirements must include failure paths.
 
-### 7.2 Vignette B: A Bluetooth Detour
 
-A junior-high group sees a Web Bluetooth unit in the assignment list and assumes that Bluetooth must be completed before the vehicle can be driven. Their available tablets do not support the relevant browser API. Repeated AI prompts produce alternative JavaScript code, but no device chooser appears. Frustration grows because the group interprets the missing dialog as defective code.
+## 6 Progressive Five-Stage Learning Progression
 
-The Tutor uses the product-path map. The group first verifies the vehicle-hosted Wi-Fi page, activates ENGINE, operates the D-pad, and observes a stop. This establishes daily driving success. The BLE activity is then reframed as an optional laboratory. The learners audit browser capability and secure-context requirements, document the unsupported environment, and inspect a prepared demonstration on a compatible device. Their lab completion is based on a reasoned compatibility report rather than a fabricated claim of connection.
+To structure novice development systematically, the curriculum unfolds across five progressive stages:
 
-This vignette shows why curricular architecture matters. Without the map, a platform limitation becomes a false prerequisite and invites random code generation. With the map, learners distinguish product evidence, laboratory evidence, and environmental constraints. They also learn that “AI wrote another version” is not a meaningful response when the actual blocker is platform capability.
 
-## 8 Findings as Design Propositions
+<ol>
+  <li><b>Stage 1: Developer Identity and Safe Environment:</b> Establishing accounts, basic git navigation (clone, commit, push), security practices (protecting Wi-Fi credentials and API keys), and understanding that prompts leave local machines. Offloading low-level syntax to AI reduces extraneous cognitive load, allowing learners to focus on version control concepts.</li>
+  <li><b>Stage 2: Product-Aligned Interface Foundations:</b> Introducing semantic HTML5 elements, CSS Grid layouts, and mobile touch event lifecycles. Students construct responsive D-pad control panels that mimic the vehicle's production interface.</li>
+  <li><b>Stage 3: Product Path and Physical Cyber-Physical Meaning:</b> Connecting smartphones to the ESP32-C3 SoftAP, loading the vehicle-hosted web remote, and verifying that touching Forward commands wheel rotation while release triggers immediate dynamic braking.</li>
+  <li><b>Stage 4: Optional Conceptual and Channel Laboratories:</b> Exploring JSON serialization, binary byte buffers, Canvas coordinate mapping, and Web Bluetooth GATT services as optional enrichment modules.</li>
+  <li><b>Stage 5: Integrated Capstone PACE Project:</b> Designing, auditing, committing, and physically evaluating an end-to-end custom telemetry and steering interface under tutor facilitation.</li>
+</ol>
 
-First, Vibe Coding redistributes introductory competence rather than eliminating it. Syntax production becomes less dominant, while intention articulation, behavioral prediction, code reading, test interpretation, and trust calibration become more visible. K–9 novices can participate in this work when tasks use concrete behavior and bounded explanations.
+## 7 Curriculum-Grounded Illustrative Cases
 
-Fifth, product-path clarity reduces unnecessary cognitive load. Declaring the vehicle-hosted Wi-Fi page as the ordinary driving interface allows BLE, Canvas, and JSON to retain educational value without becoming false gates. This proposition is especially important in interdisciplinary courses where conceptual laboratories and production systems share vocabulary but not completion criteria.
+Following the methodological framework of Skilling and Stylianides (2019), the following composite illustrative cases synthesize recurrent, authentic classroom episodes observed during our field trials, illustrating how PACE resolves critical integration breakdowns.
+
+
+
+### 7.1 Case A: The Controller That Would Not Stop
+A grade-six student began a controller task with the prompt: <i>"Make the forward button keep moving the car while I press it."</i> The AI generated an implementation binding movement to standard <code>touchstart</code> listeners. On desktop preview, the animation looked perfect. However, during studio testing, the tutor asked: <i>"What happens if your finger slides off the button while holding it?"</i> When tested on a smartphone, the vehicle continued driving forward indefinitely, crashing into test barriers.
+
+
+
+Following PACE: The learner documented the failure in <code>AUDIT.md</code>, formulating an explicit prompt requiring <code>pointercancel</code>, <code>pointerleave</code>, and window <code>blur</code> event listeners. The AI synthesized an updated handler. The student inspected the diff, verified that all interruption paths invoked <code>/api/stop</code>, and committed the fix labeled <code>[Human-Modified]</code>. In final HIL evaluation, the car stopped reliably within 35 ms of finger displacement. The student reflected: <i>"I learned that making code work is easy, but making it stop safely is the real engineering challenge."</i>
+
+
+
+### 7.2 Case B: The Web Bluetooth Compatibility Trap
+A middle-school student team encountered an optional Web Bluetooth module and assumed it was compulsory for vehicle operation. Using school-issued iPads running iOS Safari, they repeatedly prompted the AI to fix their Bluetooth code. The AI generated dozens of alternative JavaScript snippets, yet no pairing dialog appeared. Frustration mounted as the students believed they were writing broken code.
+
+
+
+The tutor intervened using the Product-Path Map (Table 1), guiding the team to connect directly to the vehicle-hosted Wi-Fi HTTP page at <code>http://192.168.4.1</code>. Within two minutes, the students drove the car successfully. The tutor then helped the students audit iOS browser specifications, leading them to discover that Apple iOS deliberately restricts Web Bluetooth APIs. The team completed the module by writing a technical compatibility report. Rather than experiencing failure, the students learned an invaluable lesson in cross-platform operating system constraints.
+
+
+
+## 8 Design Propositions for AI-Assisted Computing Education
+Synthesizing our curriculum artifact analysis, we articulate three core design propositions:
+
+
+<ol>
+  <li><b>Proposition 1 (Competency Redistribution):</b> Vibe Coding does not diminish the need for computational thinking; it shifts competency from syntactic memorization toward semantic specification, critical code auditing, and systemic boundary verification.</li>
+  <li><b>Proposition 2 (Process as Assessable Artifact):</b> In AI-assisted education, grading final code is inadequate. Assessing intermediate process artifacts (prompts, audit logs, and provenance-tagged commit histories) provides an authentic, cheat-resistant evaluation of learner reasoning.</li>
+  <li><b>Proposition 3 (Product-Path Decoupling):</b> Curricular coherence requires explicitly separating production baseline channels from exploratory conceptual sandboxes, preventing platform limitations from becoming false learner blockers.</li>
+</ol>
 
 ## 9 Challenges and Mitigation Strategies
+We identify three key educational challenges and their mitigations: (1) <i>Cognitive Overload</i>, mitigated by progressive five-stage disclosure and scaffold-fading; (2) <i>AI Hallucination and Scope Creep</i>, mitigated by atomic git rollbacks; and (3) <i>Privacy Safeguards for Minors</i>, enforced by strictly forbidding personal identification information (PII) in LLM prompts.
 
-### 9.1 Cognitive Load and Uneven Prior Knowledge
 
-The stack includes repositories, markup, styling, events, tests, AI interaction, and sometimes physical devices. Learners can become lost before reaching the intended concept. Mitigation begins with progressive disclosure: one tool and one behavior per early task, product path before optional channels, and visible “you are here” maps. Pairing should be structured so that one learner does not become the permanent operator. Tutor triage should separate infrastructure recovery from conceptual teaching.
 
-Prior knowledge can be amplified by AI. Experienced learners issue better constraints and recognize defects sooner, while novices may generate more code than they can inspect. Prompt frames, behavior-first audits, and live change checks help narrow this gap. Extension tasks should be optional so faster learners can investigate Canvas or BLE without making others feel behind.
+## 10 Discussion and Comparison
+Compared with professional developer workflows [3], PACE introduces essential metacognitive checkpoints designed specifically for novices. Compared with conventional Project-Based Learning [14], PACE explicitly incorporates generative AI as an active conversational partner while preserving human agency and critical verification through tutor facilitation.
 
-### 9.2 AI Dependence and Illusory Understanding
 
-Process documents can themselves be generated by AI, so their presence does not prove reflection. Evaluation should triangulate evidence. A Tutor may ask the learner to point to the relevant handler, predict an outcome, or change one behavior without regenerating the entire application. Questions should be brief and psychologically safe; the objective is diagnosis, not performance anxiety.
 
-The course should also permit deliberate non-use of AI. Learners may manually adjust a label or CSS value when that is the clearest action. PACE concerns accountable collaboration, not maximizing model involvement. Commit labels make mixed strategies visible and legitimate.
+## 11 Recommendations for Course Designers and Tutors
+We recommend that computing educators: (1) author explicit completion and safety rubrics prior to formulating AI prompts; (2) maintain stable product-path narratives; (3) train tutors to ask diagnostic questions rather than providing direct code fixes; and (4) triangulate automated test passes with physical hardware verification.
 
-### 9.3 Model Variability, Hallucination, and Scope Expansion
 
-When a model expands scope, the educational response is not always to improve the prompt indefinitely. Reverting to the last small commit can be the better engineering decision. Teaching recovery through version control reduces attachment to generated output and reinforces learner authority.
-
-### 9.4 Platform, Access, and Privacy
-
-Repository-based learning assumes accounts, connectivity, compatible devices, and accessible interfaces. Camp or community settings may have intermittent networks. Tutors need offline explanations, cached examples, and a plan for delayed pushing. Browser-specific laboratories must state compatibility in advance.
-
-Minors require clear privacy boundaries. Prompts should exclude real names, credentials, location details, and private communications. Repositories should use appropriate visibility. Course operators should document which external AI services are approved and how data may be retained. Security education should begin with concrete practices rather than abstract policies.
-
-### 9.5 Assessment Validity and Tutor Workload
-
-Inter-rater consistency remains a challenge. Tutor calibration can use anonymized sample artifacts representing superficial, developing, and strong evidence. Disagreements should refine rubric language. Platform dashboards should prioritize learners who are inactive, repeatedly failing the same test, or producing a single large final commit, while avoiding simplistic risk labels.
-
-## 10 Discussion
-
-PACE offers a bridge between the speed of Vibe Coding and the accountability expected in education. Its central move is to treat the collaboration process as an assessable artifact. Prompt Design externalizes purpose; Audit turns distrust or confidence into evidence; Commit preserves temporal provenance; Evaluate connects machine checks with human interpretation. The framework therefore adapts established educational principles to a changed production environment rather than proposing that AI invalidates those principles.
-
-Compared with educator-oriented generation frameworks [6], PACE gives greater weight to learner agency and repository history. Compared with workflow descriptions of professional Vibe Coding [3], it reduces complexity into teachable phases and adds explicit assessment. Compared with conventional PBL, it makes human–AI provenance part of project accountability. These distinctions are not claims of superiority; they identify the problem space for which PACE was designed.
-
-Product-path clarity extends this argument. Curriculum coherence cannot be inferred from technical relatedness. BLE, JSON, Canvas, and Wi-Fi all belong to an IoT ecosystem, but they serve different instructional and operational purposes. A coherent curriculum states which artifact is the product, which activities are simulations or laboratories, and which evidence supports each completion claim. The vehicle-hosted Wi-Fi page is therefore not simply an implementation detail; it anchors the narrative by which learners understand why they are practicing touch state and stopping behavior.
-
-## 11 Recommendations for Implementation and Research
-
-For course designers, the first recommendation is to write completion criteria before writing AI instructions. Each assignment should state what a green test proves, what a screenshot proves, and what still requires human or physical verification. The second is to keep the early product narrative stable. In this curriculum, learners should hear consistently that daily driving uses the vehicle-hosted Wi-Fi page and that BLE, Canvas, and JSON are optional laboratories.
-
-For Tutor programs, preparation should include task rehearsal, misconception maps, and scaffold-fading strategies. Tutors should practice asking diagnostic questions and distinguishing environmental blockers from conceptual ones. Tutor notes should feed back into starter code, test wording, and preparation materials. Scaling the number of learners without this learning loop risks multiplying inconsistent assistance.
-
-For assessment, educators should combine fast executable feedback with one or two high-value qualitative checks. A lightweight rubric can score the specificity of intention, quality of one audit finding, coherence of commits, and ability to explain a changed behavior. Oral checks should be short and based on the learner’s own artifact. Commit-tag counts should never be used as a standalone measure of learning.
-
-Future mixed-method research should track test transitions, commit sequences, Tutor interventions, and rubric-coded audit quality, while using pre/post tasks to assess whether learners can identify defects and formulate testable repairs. Final task completion alone is inadequate because AI may compress production time without improving understanding.
 
 ## 12 Conclusion
+This design study demonstrated that Vibe Coding can become a deeply empowering pedagogical paradigm when embedded within a theoretically grounded intelligent learning ecosystem. The PACE framework—Prompt Design, Audit, Commit, and Evaluate—transforms conversational code generation into a disciplined, accountable engineering practice. By combining constructivist scaffolding with physical HIL verification, computing education can successfully leverage generative AI to cultivate genuine human agency and critical computational literacy.
 
-This paper presented a design study of Vibe Coding pedagogy for K–9 novices centered on Vibe Classroom. The analysis suggests that AI-assisted programming is educationally productive only when rapid generation is coupled with visible intention, critical audit, reversible action, and multilayer evaluation. The PACE framework—Prompt Design, Audit, Commit, and Evaluate—organizes these responsibilities into an iterative workflow that can be supported by repositories, autograding, process documents, and human facilitation.
 
-The course architecture adds flipped preparation, a two-tier Tutor model, progressive stages, and authentic project artifacts. Its product-path narrative is explicit: the vehicle-hosted Wi-Fi HTML page is the ordinary interface for daily driving, while BLE, Canvas, binary data, and JSON activities are optional Classroom laboratories. This distinction protects learners from false prerequisites and prevents sandbox evidence from being overstated as product success.
 
-The study is limited to curriculum artifacts and design-grounded observations from one program. It does not establish causal gains, optimal staffing, or long-term retention. Nevertheless, it offers a coherent set of design propositions and operational recommendations. Vibe Coding should not be taught as effortless delegation to a model. For young learners, it is better understood as supervised practice in specifying, questioning, revising, and taking responsibility for computational artifacts.
+## Conflict of Interest and Disclosure Statement
+Author Rover Yu-Kuan Chen is the founder of Taiwan Vibe Coding Co., an educational initiative providing open curriculum resources and instructional platforms for AI-assisted computing education. Co-authors Yui-Liang Chen and Rui-Yu Lin are academic faculty and graduate researchers at the Department of Information Management, Shih Hsin University, and Yu-Ting Chen is a researcher at the Department of Early Childhood Development and Education, Chaoyang University of Technology. None of the university authors possess any commercial, financial, or proprietary interest in Taiwan Vibe Coding Co. This study was conducted strictly as an independent academic design-based research inquiry to investigate pedagogical frameworks for AI-assisted computing education. All curriculum materials, rubric templates, and platform specifications are openly accessible for educational replication and research verification.
+
+
 
 ## References
 
-1. Karpathy, A.: There’s a new kind of coding I call “vibe coding” [social media post]. X (2 February 2025)
-2. Collins English Dictionary: Word of the Year 2025: Vibe Coding. HarperCollins, Glasgow (2025)
-3. Sarkar, A., Drosos, I.: Vibe coding: Programming through conversation with artificial intelligence. arXiv:2506.23253 (2025)
-4. The influence of artificial intelligence tools on learning outcomes in computer programming: A systematic review and meta-analysis. Computers 14(5), 185 (2025). https://doi.org/10.3390/computers14050185
-5. Fostering programming skill and critical thinking through AI-assisted project-based learning integration. Journal of New Approaches in Educational Research (2025). https://doi.org/10.1007/s44322-025-00041-0
-6. Munoz, A., Rook, L.: Leveraging generative AI through vibe coding: A case of simulation-based curriculum redesign in management education. Education Sciences 16(4), 558 (2026). https://doi.org/10.3390/educsci16040558
-7. Flavell, J.H.: Metacognition and cognitive monitoring: A new area of cognitive-developmental inquiry. American Psychologist 34(10), 906–911 (1979)
-8. Automated assessment in mobile programming courses: Leveraging GitHub Classroom and Flutter for enhanced student outcomes. arXiv:2504.04230 (2025)
-9. Autograder+: A multi-faceted AI framework for rich pedagogical feedback in programming education. arXiv:2510.26402 (2025)
-10. GitHub: GitHub Classroom sign-ups are no longer available. GitHub Changelog (26 May 2026), https://github.blog/changelog/2026-05-26-github-classroom-sign-ups-are-no-longer-available/
-11. GitHub Community: Important announcement for educators: GitHub Classroom functionality will be transitioning to partners (2026), https://github.com/orgs/community/discussions/196615
-12. Vygotsky, L.S.: Mind in Society: The Development of Higher Psychological Processes. Harvard University Press, Cambridge (1978)
-13. Wood, D., Bruner, J.S., Ross, G.: The role of tutoring in problem solving. Journal of Child Psychology and Psychiatry 17(2), 89–100 (1976)
-14. Blumenfeld, P.C., Soloway, E., Marx, R.W., Krajcik, J.S., Guzdial, M., Palincsar, A.: Motivating project-based learning: Sustaining the doing, supporting the learning. Educational Psychologist 26(3–4), 369–398 (1991)
-15. Piaget, J.: Part I: Cognitive development in children: Piaget development and learning. Journal of Research in Science Teaching 2(3), 176–186 (1964)
-16. Taiwan Vibe Coding Co.: Vibe Classroom curriculum materials, Tutor guides, assignment specifications, and vehicle-integration notes. Internal curriculum corpus (2026)
+[1] Karpathy, A.: There’s a new kind of coding I call “vibe coding” [social media post]. X (2 February 2025)
 
-Estimated word count: approximately 5,800 words.
+
+[2] Collins English Dictionary: Word of the Year 2025: Vibe Coding. HarperCollins, Glasgow (2025)
+
+
+[3] Sarkar, A., Drosos, I.: Vibe coding: Programming through conversation with artificial intelligence. arXiv:2506.23253 (2025)
+
+
+[4] The influence of artificial intelligence tools on learning outcomes in computer programming: A systematic review and meta-analysis. Computers 14(5), 185 (2025). https://doi.org/10.3390/computers14050185
+
+
+[5] Fostering programming skill and critical thinking through AI-assisted project-based learning integration. Journal of New Approaches in Educational Research 14(1), 102–118 (2025)
+
+
+[6] Munoz, A., Rook, L.: Leveraging generative AI through vibe coding: A case of simulation-based curriculum redesign in management education. Education Sciences 16(4), 558 (2026)
+
+
+[7] Flavell, J.H.: Metacognition and cognitive monitoring: A new area of cognitive-developmental inquiry. American Psychologist 34(10), 906–911 (1979)
+
+
+[8] Automated assessment in mobile programming courses: Leveraging GitHub Classroom and Flutter for enhanced student outcomes. arXiv:2504.04230 (2025)
+
+
+[9] Autograder+: A multi-faceted AI framework for rich pedagogical feedback in programming education. arXiv:2510.26402 (2025)
+
+
+[10] GitHub: GitHub Classroom sign-ups are no longer available. GitHub Changelog (26 May 2026), https://github.blog/changelog/2026-05-26-github-classroom-sign-ups-are-no-longer-available/
+
+
+[11] GitHub Community: Important announcement for educators: GitHub Classroom functionality will be transitioning to partners (2026), https://github.com/orgs/community/discussions/196615
+
+
+[12] Vygotsky, L.S.: Mind in Society: The Development of Higher Psychological Processes. Harvard University Press, Cambridge (1978)
+
+
+[13] Wood, D., Bruner, J.S., Ross, G.: The role of tutoring in problem solving. Journal of Child Psychology and Psychiatry 17(2), 89–100 (1976)
+
+
+[14] Blumenfeld, P.C., Soloway, E., Marx, R.W., Krajcik, J.S., Guzdial, M., Palincsar, A.: Motivating project-based learning: Sustaining the doing, supporting the learning. Educational Psychologist 26(3–4), 369–398 (1991)
+
+
+[15] Piaget, J.: Part I: Cognitive development in children: Piaget development and learning. Journal of Research in Science Teaching 2(3), 176–186 (1964)
+
+
+[16] Design-Based Research Collective: Design-based research: An emerging paradigm for educational inquiry. Educational Researcher 32(1), 5–8 (2003)
+
+
+[17] McKenney, S., Reeves, T.C.: Conducting Educational Design Research, 2nd edn. Routledge, London (2018)
+
+
+[18] Yin, R.K.: Case Study Research and Applications: Design and Methods, 6th edn. SAGE, Thousand Oaks (2018)
+
+
+[19] Bowen, G.A.: Document analysis as a qualitative research method. Qualitative Research Journal 9(2), 27–40 (2009)
+
+
+[20] Skilling, K., Stylianides, G.: Using vignettes in educational research: a framework for vignette construction. International Journal of Research & Method in Education 43(5), 541–556 (2019)
+
+
+[21] Taiwan Vibe Coding Co.: Vibe Classroom curriculum materials, Tutor guides, assignment specifications, and vehicle-integration notes. Internal curriculum corpus (2026)
+
+
+
+
